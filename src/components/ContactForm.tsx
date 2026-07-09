@@ -28,10 +28,19 @@ export function ContactForm({ locale }: { locale: string }) {
     setErrors(errs);
     if (Object.keys(errs).length > 0) return;
     setSubmitting(true);
-    // TODO: wire to backend/email service (e.g., Resend, Supabase Edge Function, or Formspree)
-    await new Promise((r) => setTimeout(r, 900));
-    setSubmitting(false);
-    setSubmitted(true);
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) throw new Error('send failed');
+      setSubmitted(true);
+    } catch {
+      setErrors({ message: locale === 'ar' ? 'حدث خطأ. يرجى المحاولة مرة أخرى.' : 'Something went wrong. Please try again.' });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {

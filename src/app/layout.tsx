@@ -4,7 +4,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Zurriya | Growing Minds. Shaping Generations.',
+    default: 'Zurriya | Small Steps, Held Steady.',
     template: '%s | Zurriya',
   },
   description:

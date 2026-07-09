@@ -8,7 +8,7 @@ import { teamMembers } from '@/content/team';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Zurriya | Growing Minds. Shaping Generations.',
+  title: 'Zurriya | Small Steps, Held Steady.',
   description: 'Child and adolescent development center in New Cairo. Evidence-based assessments, individualized interventions, and family partnership.',
 };
 
@@ -65,7 +65,7 @@ export default async function HomePage() {
   const tCon    = await getTranslations('contact');
   const isAr    = locale === 'ar';
 
-  const tagline   = isAr ? 'عقول تنمو.. أجيال تُبنى' : 'Growing Minds. Shaping Generations.';
+  const tagline   = isAr ? 'خطواتٌ صغيرة.. بأيدٍ ثابتة' : 'Small steps, held steady.';
   const bookLabel = isAr ? 'احجز استشارة' : 'Book a Consultation';
 
   // ── service card config ──
@@ -146,19 +146,19 @@ export default async function HomePage() {
             <h1 className="font-heading text-[2.6rem] sm:text-5xl md:text-6xl lg:text-[4.25rem] text-ink leading-[1.08] tracking-tight">
               {isAr ? (
                 <>
-                  <span className="text-gradient-teal">عقول</span>
-                  {' '}تنمو.{' '}
+                  <span className="text-gradient-teal">خطواتٌ</span>
+                  {' '}صغيرة..{' '}
                   <br />
-                  <span className="text-gradient-coral">أجيال</span>
-                  {' '}تُبنى.
+                  <span className="text-gradient-coral">بأيدٍ</span>
+                  {' '}ثابتة.
                 </>
               ) : (
                 <>
-                  <span className="text-gradient-teal">Growing</span>
-                  {' '}Minds.{' '}
+                  <span className="text-gradient-teal">Small</span>
+                  {' '}steps,{' '}
                   <br />
-                  <span className="text-gradient-coral">Shaping</span>
-                  {' '}Generations.
+                  <span className="text-gradient-coral">held</span>
+                  {' '}steady.
                 </>
               )}
             </h1>

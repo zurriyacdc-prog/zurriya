@@ -32,7 +32,7 @@ export function Footer() {
               />
             </div>
             <p className="text-white/45 text-sm leading-relaxed max-w-[210px]">
-              {isAr ? 'عقول تنمو.. أجيال تُبنى' : 'Growing Minds. Shaping Generations.'}
+              {isAr ? 'خطواتٌ صغيرة.. بأيدٍ ثابتة' : 'Small steps, held steady.'}
             </p>
             <div className={`flex items-center gap-2 text-white/35 text-xs ${isAr ? 'flex-row-reverse' : ''}`}>
               <svg width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
