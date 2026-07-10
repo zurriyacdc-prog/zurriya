@@ -364,7 +364,7 @@ export function IntakeForm({ locale }: { locale: string }) {
       const res = await fetch('/api/intake', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, locale }),
       });
       setStatus(res.ok ? 'done' : 'error');
     } catch {
