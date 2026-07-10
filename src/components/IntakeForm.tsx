@@ -901,7 +901,7 @@ export function IntakeForm({ locale }: { locale: string }) {
         ];
 
     return (
-      <div className="max-w-2xl mx-auto">
+      <div className="max-w-2xl mx-auto" dir={isAr ? 'rtl' : 'ltr'}>
         {/* Logo + center name */}
         <div className="text-center mb-8">
           <div className="inline-block bg-white rounded-2xl shadow-sm border border-border p-3 mb-5">
@@ -935,13 +935,13 @@ export function IntakeForm({ locale }: { locale: string }) {
 
           {/* Bullets */}
           <div className="px-8 py-7 flex flex-col gap-4">
-            <p className="text-xs font-bold tracking-[0.15em] uppercase text-ink-2/50 mb-1">
+            <p className="text-xs font-bold tracking-[0.15em] uppercase text-ink-2/50 mb-1 text-start">
               {isAr ? 'ما الذي ستجدون في هذه الاستمارة؟' : 'What to expect'}
             </p>
             {bullets.map((b, i) => (
-              <div key={i} className={`flex items-start gap-3 ${isAr ? 'flex-row-reverse text-right' : ''}`}>
+              <div key={i} className="flex items-start gap-3 rtl:flex-row-reverse">
                 <span className="text-xl flex-shrink-0 mt-0.5">{b.icon}</span>
-                <p className="text-sm text-ink-2 leading-relaxed">{b.text}</p>
+                <p className="text-sm text-ink-2 leading-relaxed text-start">{b.text}</p>
               </div>
             ))}
           </div>
@@ -960,9 +960,9 @@ export function IntakeForm({ locale }: { locale: string }) {
             <button
               type="button"
               onClick={() => setStarted(true)}
-              className="w-full flex items-center justify-center gap-3 bg-teal text-white font-semibold text-base rounded-2xl py-4 hover:bg-teal-dark transition-colors shadow-md shadow-teal/25"
+              className="w-full flex items-center justify-center gap-3 rtl:flex-row-reverse bg-teal text-white font-semibold text-base rounded-2xl py-4 hover:bg-teal-dark transition-colors shadow-md shadow-teal/25"
             >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className={isAr ? 'rotate-180' : ''}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24" className="rtl:rotate-180 flex-shrink-0">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3"/>
               </svg>
               {isAr ? 'ابدأ الاستمارة' : 'Start the Form'}
