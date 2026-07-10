@@ -40,7 +40,7 @@ export function Header() {
           : 'bg-paper border-b border-transparent'
       }`}
     >
-      <nav className="max-w-content mx-auto px-6 h-16 flex items-center justify-between gap-6 rtl:flex-row-reverse">
+      <nav className="max-w-content mx-auto px-6 h-16 flex items-center justify-between gap-6">
         {/* Logo */}
         <Link href={`/${locale}`} className="shrink-0">
           <Image
@@ -54,7 +54,7 @@ export function Header() {
         </Link>
 
         {/* Desktop nav */}
-        <ul className="hidden md:flex items-center gap-7 rtl:flex-row-reverse">
+        <ul className="hidden md:flex items-center gap-7">
           {navItems.map((item) => (
             <li key={item.href}>
               <a
@@ -68,7 +68,7 @@ export function Header() {
         </ul>
 
         {/* Right side */}
-        <div className="hidden md:flex items-center gap-3 rtl:flex-row-reverse">
+        <div className="hidden md:flex items-center gap-3">
           <Link
             href={`/${otherLocale}`}
             className="text-sm font-semibold text-ink-2 hover:text-teal transition-colors border border-border hover:border-teal/40 rounded-full px-4 py-1.5"
@@ -84,7 +84,7 @@ export function Header() {
         </div>
 
         {/* Mobile controls */}
-        <div className="md:hidden flex items-center gap-2 rtl:flex-row-reverse">
+        <div className="md:hidden flex items-center gap-2">
           <Link href={`/${otherLocale}`} className="text-sm font-semibold text-ink-2 border border-border rounded-full px-3 py-1">
             {isAr ? 'EN' : 'عربي'}
           </Link>

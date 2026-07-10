@@ -939,9 +939,9 @@ export function IntakeForm({ locale }: { locale: string }) {
               {isAr ? 'ما الذي ستجدون في هذه الاستمارة؟' : 'What to expect'}
             </p>
             {bullets.map((b, i) => (
-              <div key={i} className="flex items-start gap-3 rtl:flex-row-reverse">
+              <div key={i} className="flex items-start gap-3">
                 <span className="text-xl flex-shrink-0 mt-0.5">{b.icon}</span>
-                <p className="text-sm text-ink-2 leading-relaxed text-start">{b.text}</p>
+                <p className="text-sm text-ink-2 leading-relaxed">{b.text}</p>
               </div>
             ))}
           </div>
