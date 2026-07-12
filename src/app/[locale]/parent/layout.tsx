@@ -1,41 +1,27 @@
-'use client';
+import { createClient } from '@/lib/supabase/server';
+import ParentShell from '@/components/portal/ParentShell';
 
-import { PortalShell, NavItem } from '@/components/portal/PortalShell';
-import {
-  LayoutDashboard, Map, FileText, CalendarDays, ImageIcon, Heart,
-} from 'lucide-react';
-
-export default function ParentPortalLayout({
+export default async function ParentPortalLayout({
   children,
   params: { locale },
 }: {
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  const base = `/${locale}/parent`;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const navItems: NavItem[] = [
-    { href: base,                  labelEn: 'Home',        labelAr: 'الرئيسية',    icon: <LayoutDashboard size={18} /> },
-    { href: `${base}/journey`,     labelEn: 'Journey',     labelAr: 'رحلتنا',      icon: <Map size={18} />            },
-    { href: `${base}/plan`,        labelEn: 'Plan',        labelAr: 'خطة العلاج',  icon: <FileText size={18} />       },
-    { href: `${base}/reports`,     labelEn: 'Reports',     labelAr: 'التقارير',    icon: <FileText size={18} />       },
-    { href: `${base}/sessions`,    labelEn: 'Sessions',    labelAr: 'الجلسات',     icon: <CalendarDays size={18} />   },
-    { href: `${base}/gallery`,     labelEn: 'Gallery',     labelAr: 'الصور',       icon: <ImageIcon size={18} />      },
-    { href: `${base}/reinforcers`, labelEn: 'Reinforcers', labelAr: 'المعززات',    icon: <Heart size={18} />          },
-  ];
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('name_en, name_ar').eq('id', user.id).single()
+    : { data: null };
 
   return (
-    <PortalShell
+    <ParentShell
       locale={locale}
-      portal="parent"
-      navItems={navItems}
-      titleEn="Family Portal"
-      titleAr="بوابة الأسرة"
-      userNameEn="Ahmed Youssef"
-      userNameAr="أحمد يوسف"
-      userRole="Parent"
+      nameEn={profile?.name_en ?? 'Parent'}
+      nameAr={profile?.name_ar ?? 'ولي الأمر'}
     >
       {children}
-    </PortalShell>
+    </ParentShell>
   );
 }

@@ -12,7 +12,7 @@ export async function createUser(formData: FormData) {
 
   if (!email || !nameEn) return { error: 'Name and email are required' };
 
-  const tempPassword = Math.random().toString(36).slice(-10) + 'Zr1!';
+  const tempPassword = Math.random().toString(36).slice(-8) + 'Zr1!';
 
   const { data, error } = await adminClient.auth.admin.createUser({
     email,
@@ -23,10 +23,9 @@ export async function createUser(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  // Upsert profile in case trigger was slow
   await adminClient.from('profiles').upsert({
     id: data.user.id,
-    role: role as 'parent' | 'therapist' | 'admin',
+    role,
     name_en: nameEn,
     name_ar: nameAr || nameEn,
     is_active: true,
@@ -34,6 +33,24 @@ export async function createUser(formData: FormData) {
 
   revalidatePath('/[locale]/admin', 'layout');
   return { success: true, tempPassword };
+}
+
+export async function deleteUser(userId: string) {
+  const { error } = await adminClient.auth.admin.deleteUser(userId);
+  if (error) return { error: error.message };
+  await adminClient.from('profiles').delete().eq('id', userId);
+  revalidatePath('/[locale]/admin/users');
+  return { success: true };
+}
+
+export async function resetUserPassword(userId: string) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  const base  = Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+  const newPassword = base + 'Zr1!';
+
+  const { error } = await adminClient.auth.admin.updateUserById(userId, { password: newPassword });
+  if (error) return { error: error.message };
+  return { success: true, newPassword };
 }
 
 export async function toggleUserStatus(userId: string, isActive: boolean) {
@@ -46,18 +63,39 @@ export async function createChild(formData: FormData) {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { error: 'Unauthorized' };
 
-  const { error } = await adminClient.from('children').insert({
-    name_en:       formData.get('name_en') as string,
-    name_ar:       formData.get('name_ar') as string || formData.get('name_en') as string,
-    age:           Number(formData.get('age')),
-    diagnosis_en:  formData.get('diagnosis_en') as string,
-    diagnosis_ar:  formData.get('diagnosis_ar') as string || formData.get('diagnosis_en') as string,
-    status:        'active',
-    avatar_emoji:  '👦',
-    created_by:    user.id,
-  });
+  const nameEn      = formData.get('name_en') as string;
+  const nameAr      = formData.get('name_ar') as string;
+  const diagnosisEn = formData.get('diagnosis_en') as string;
+  const diagnosisAr = formData.get('diagnosis_ar') as string;
+  const parentId    = formData.get('parent_id') as string || null;
+  const therapistId = formData.get('therapist_id') as string || null;
+
+  const { data: child, error } = await adminClient
+    .from('children')
+    .insert({
+      name_en:      nameEn,
+      name_ar:      nameAr || nameEn,
+      age:          Number(formData.get('age')),
+      diagnosis_en: diagnosisEn,
+      diagnosis_ar: diagnosisAr || diagnosisEn,
+      status:       'active',
+      avatar_emoji: '👦',
+      created_by:   user.id,
+    })
+    .select('id')
+    .single();
 
   if (error) return { error: error.message };
+
+  // Auto-create relationship if parent or therapist selected
+  if (child && (parentId || therapistId)) {
+    await adminClient.from('child_relationships').insert({
+      child_id:     child.id,
+      parent_id:    parentId,
+      therapist_id: therapistId,
+    });
+  }
+
   revalidatePath('/[locale]/admin/children');
   return { success: true };
 }
@@ -68,9 +106,7 @@ export async function archiveChild(childId: string) {
 }
 
 export async function saveRelationship(childId: string, parentId: string | null, therapistId: string | null) {
-  // Delete existing then insert fresh
   await adminClient.from('child_relationships').delete().eq('child_id', childId);
-
   if (parentId || therapistId) {
     await adminClient.from('child_relationships').insert({
       child_id:     childId,
@@ -78,7 +114,6 @@ export async function saveRelationship(childId: string, parentId: string | null,
       therapist_id: therapistId || null,
     });
   }
-
   revalidatePath('/[locale]/admin/relations');
   return { success: true };
 }

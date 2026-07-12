@@ -1,38 +1,27 @@
-'use client';
+import { createClient } from '@/lib/supabase/server';
+import TherapistShell from '@/components/portal/TherapistShell';
 
-import { PortalShell, NavItem } from '@/components/portal/PortalShell';
-import {
-  LayoutDashboard, Users, CalendarDays, MoreHorizontal,
-} from 'lucide-react';
-
-export default function TherapistPortalLayout({
+export default async function TherapistPortalLayout({
   children,
   params: { locale },
 }: {
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  const base = `/${locale}/therapist`;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const navItems: NavItem[] = [
-    { href: base,               labelEn: 'Dashboard', labelAr: 'لوحة التحكم', icon: <LayoutDashboard size={18} /> },
-    { href: `${base}/children`, labelEn: 'Children',  labelAr: 'الأطفال',     icon: <Users size={18} />           },
-    { href: `${base}/calendar`, labelEn: 'Calendar',  labelAr: 'التقويم',     icon: <CalendarDays size={18} />    },
-    { href: `${base}/more`,     labelEn: 'More',       labelAr: 'المزيد',      icon: <MoreHorizontal size={18} />  },
-  ];
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('name_en, name_ar').eq('id', user.id).single()
+    : { data: null };
 
   return (
-    <PortalShell
+    <TherapistShell
       locale={locale}
-      portal="therapist"
-      navItems={navItems}
-      titleEn="Therapist Portal"
-      titleAr="بوابة المعالج"
-      userNameEn="Dr. Sara Mahmoud"
-      userNameAr="د. سارة محمود"
-      userRole="BCBA, QBA"
+      nameEn={profile?.name_en ?? 'Therapist'}
+      nameAr={profile?.name_ar ?? 'معالج'}
     >
       {children}
-    </PortalShell>
+    </TherapistShell>
   );
 }

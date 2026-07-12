@@ -34,18 +34,20 @@ export default async function ParentHome({ params: { locale } }: { params: { loc
   }
 
   // Fetch child + therapist + counts in parallel
-  const [{ data: child }, { data: therapistProfile }, { count: goalCount }, { count: sessionCount }, { count: reportCount }] =
+  const [{ data: child }, therapistResult, { count: goalCount }, { count: sessionCount }, { count: reportCount }] =
     await Promise.all([
       supabase.from('children').select('*').eq('id', rel.child_id).single(),
       rel.therapist_id
         ? supabase.from('profiles').select('name_en, name_ar').eq('id', rel.therapist_id).single()
-        : Promise.resolve({ data: null }),
+        : Promise.resolve({ data: null, error: null }),
       supabase.from('goals').select('*', { count: 'exact', head: true }).eq('child_id', rel.child_id).eq('is_active', true),
       supabase.from('sessions').select('*', { count: 'exact', head: true }).eq('child_id', rel.child_id),
       supabase.from('reports').select('*', { count: 'exact', head: true }).eq('child_id', rel.child_id),
     ]);
 
   if (!child) redirect(`/${locale}/parent`);
+
+  const therapistProfile = therapistResult?.data;
 
   const quickLinks = [
     { href: `${base}/journey`,     labelEn: 'Journey Timeline',     labelAr: 'رحلة التطور',     emoji: '🗺️' },
@@ -81,7 +83,7 @@ export default async function ParentHome({ params: { locale } }: { params: { loc
 
           <div className="grid grid-cols-1 gap-0 mt-5">
             {[
-              { labelEn: 'Therapist',  labelAr: 'المعالج',  val: therapistProfile ? (isAr ? therapistProfile.name_ar : therapistProfile.name_en) : '—' },
+              { labelEn: 'Therapist',  labelAr: 'المعالج',  val: therapistProfile ? (therapistProfile.name_en || therapistProfile.name_ar || '—') : '—' },
               { labelEn: 'Diagnosis',  labelAr: 'التشخيص',  val: isAr ? child.diagnosis_ar : child.diagnosis_en },
               { labelEn: 'Status',     labelAr: 'الحالة',   val: isAr ? (child.status === 'active' ? 'نشط' : child.status) : child.status },
             ].map(({ labelEn, labelAr, val }) => (

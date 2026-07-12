@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { createUser, toggleUserStatus } from '@/lib/supabase/admin-actions';
+import { createUser, deleteUser, resetUserPassword, toggleUserStatus } from '@/lib/supabase/admin-actions';
 
 type Profile = { id: string; name_en: string; name_ar: string; role: string; is_active: boolean };
 
@@ -18,33 +18,43 @@ export default function UsersPageClient({ locale, users }: { locale: string; use
   const [creating, setCreating]   = useState(false);
   const [search, setSearch]       = useState('');
   const [feedback, setFeedback]   = useState('');
+  const [expandedId, setExpanded] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const filtered = users.filter((u) =>
     (isAr ? u.name_ar : u.name_en).toLowerCase().includes(search.toLowerCase())
   );
 
+  const setMsg = (msg: string) => { setFeedback(msg); setTimeout(() => setFeedback(''), 8000); };
+
   const handleCreate = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     startTransition(async () => {
       const res = await createUser(fd);
-      if (res?.error) {
-        setFeedback(`Error: ${res.error}`);
-      } else {
-        setFeedback(isAr
-          ? `تم الإنشاء! كلمة المرور المؤقتة: ${res?.tempPassword}`
-          : `Created! Temp password: ${res?.tempPassword}`);
-        setCreating(false);
-        router.refresh();
-      }
+      if (res?.error) { setMsg(`Error: ${res.error}`); }
+      else { setMsg(isAr ? `تم الإنشاء! كلمة المرور: ${res?.tempPassword}` : `Created! Temp password: ${res?.tempPassword}`); setCreating(false); router.refresh(); }
     });
   };
 
   const handleToggle = (id: string, current: boolean) => {
+    startTransition(async () => { await toggleUserStatus(id, !current); router.refresh(); });
+  };
+
+  const handleDelete = (id: string, name: string) => {
+    if (!confirm(isAr ? `حذف ${name}؟ لا يمكن التراجع عن هذا الإجراء.` : `Delete ${name}? This cannot be undone.`)) return;
     startTransition(async () => {
-      await toggleUserStatus(id, !current);
-      router.refresh();
+      const res = await deleteUser(id);
+      if (res?.error) setMsg(`Error: ${res.error}`);
+      else { setMsg(isAr ? 'تم حذف المستخدم' : 'User deleted'); router.refresh(); }
+    });
+  };
+
+  const handleReset = (id: string) => {
+    startTransition(async () => {
+      const res = await resetUserPassword(id);
+      if (res?.error) setMsg(`Error: ${res.error}`);
+      else setMsg(isAr ? `كلمة المرور الجديدة: ${res?.newPassword}` : `New password: ${res?.newPassword}`);
     });
   };
 
@@ -65,7 +75,7 @@ export default function UsersPageClient({ locale, users }: { locale: string; use
       </div>
 
       {feedback && (
-        <div className={`text-sm rounded-xl px-4 py-3 ${feedback.startsWith('Error') ? 'bg-coral/10 text-coral border border-coral/20' : 'bg-sage-pale text-sage border border-sage/20'}`}>
+        <div className={`text-sm rounded-xl px-4 py-3 break-all ${feedback.startsWith('Error') ? 'bg-coral/10 text-coral border border-coral/20' : 'bg-sage-pale text-sage border border-sage/20'}`}>
           {feedback}
         </div>
       )}
@@ -86,9 +96,7 @@ export default function UsersPageClient({ locale, users }: { locale: string; use
             <option value="therapist">{isAr ? 'معالج' : 'Therapist'}</option>
             <option value="admin">{isAr ? 'مدير' : 'Administrator'}</option>
           </select>
-          <p className="text-xs text-ink-2/50">
-            {isAr ? 'سيتم توليد كلمة مرور مؤقتة — احفظها' : 'A temp password will be generated — save it'}
-          </p>
+          <p className="text-xs text-ink-2/50">{isAr ? 'سيتم توليد كلمة مرور مؤقتة — احفظها من الإشعار' : 'A temp password is generated — save it from the notice'}</p>
           <div className="flex gap-2">
             <button type="submit" disabled={isPending}
               className="flex-1 py-2.5 rounded-xl bg-teal text-white text-sm font-semibold hover:bg-teal-dark disabled:opacity-60">
@@ -115,20 +123,46 @@ export default function UsersPageClient({ locale, users }: { locale: string; use
 
       <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
         {filtered.length ? filtered.map((u, idx) => (
-          <div key={u.id} className={`flex items-center gap-4 px-5 py-4 hover:bg-paper transition-colors ${idx !== filtered.length - 1 ? 'border-b border-border/60' : ''}`}>
-            <div className="w-10 h-10 rounded-full bg-teal-pale flex items-center justify-center flex-shrink-0">
-              <span className="text-sm font-bold text-teal">{(isAr ? u.name_ar : u.name_en).charAt(0)}</span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <p className="text-sm font-semibold text-ink">{isAr ? u.name_ar : u.name_en}</p>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROLE_STYLES[u.role] ?? ''}`}>{u.role}</span>
+          <div key={u.id} className={`${idx !== filtered.length - 1 ? 'border-b border-border/60' : ''}`}>
+            {/* Main row */}
+            <div className="flex items-center gap-4 px-5 py-4 hover:bg-paper transition-colors">
+              <div className="w-10 h-10 rounded-full bg-teal-pale flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-teal">{(isAr ? u.name_ar : u.name_en).charAt(0)}</span>
               </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <p className="text-sm font-semibold text-ink">{isAr ? u.name_ar : u.name_en}</p>
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${ROLE_STYLES[u.role] ?? ''}`}>{u.role}</span>
+                </div>
+              </div>
+              {/* Active toggle */}
+              <button onClick={() => handleToggle(u.id, u.is_active)} disabled={isPending}
+                className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 ${u.is_active ? 'bg-sage' : 'bg-border'}`}>
+                <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${u.is_active ? 'start-5' : 'start-0.5'}`} />
+              </button>
+              {/* Expand */}
+              <button onClick={() => setExpanded(expandedId === u.id ? null : u.id)}
+                className="text-ink-2/40 hover:text-ink-2 p-1 transition-colors">
+                <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
+                  className={`transition-transform ${expandedId === u.id ? 'rotate-180' : ''}`}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7"/>
+                </svg>
+              </button>
             </div>
-            <button onClick={() => handleToggle(u.id, u.is_active)} disabled={isPending}
-              className={`w-10 h-5 rounded-full relative transition-colors flex-shrink-0 ${u.is_active ? 'bg-sage' : 'bg-border'}`}>
-              <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${u.is_active ? 'start-5' : 'start-0.5'}`} />
-            </button>
+
+            {/* Expanded actions */}
+            {expandedId === u.id && (
+              <div className="px-5 pb-4 flex gap-2 bg-paper/60">
+                <button onClick={() => handleReset(u.id)} disabled={isPending}
+                  className="flex-1 py-2 rounded-xl bg-teal/10 text-teal text-xs font-semibold hover:bg-teal/20 transition-colors">
+                  🔑 {isAr ? 'إعادة تعيين كلمة المرور' : 'Reset Password'}
+                </button>
+                <button onClick={() => handleDelete(u.id, isAr ? u.name_ar : u.name_en)} disabled={isPending}
+                  className="px-4 py-2 rounded-xl bg-coral/10 text-coral text-xs font-semibold hover:bg-coral/20 transition-colors">
+                  🗑 {isAr ? 'حذف' : 'Delete'}
+                </button>
+              </div>
+            )}
           </div>
         )) : (
           <p className="text-sm text-ink-2/50 text-center py-8">{isAr ? 'لا يوجد مستخدمون' : 'No users yet'}</p>

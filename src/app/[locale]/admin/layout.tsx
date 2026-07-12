@@ -1,38 +1,27 @@
-'use client';
+import { createClient } from '@/lib/supabase/server';
+import AdminShell from '@/components/portal/AdminShell';
 
-import { PortalShell, NavItem } from '@/components/portal/PortalShell';
-import {
-  LayoutDashboard, Users, Baby, Link2,
-} from 'lucide-react';
-
-export default function AdminLayout({
+export default async function AdminLayout({
   children,
   params: { locale },
 }: {
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  const base = `/${locale}/admin`;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
 
-  const navItems: NavItem[] = [
-    { href: base,                labelEn: 'Dashboard',     labelAr: 'لوحة التحكم',       icon: <LayoutDashboard size={18} /> },
-    { href: `${base}/users`,     labelEn: 'Users',         labelAr: 'المستخدمون',         icon: <Users size={18} />           },
-    { href: `${base}/children`,  labelEn: 'Children',      labelAr: 'الأطفال',            icon: <Baby size={18} />            },
-    { href: `${base}/relations`, labelEn: 'Relationships', labelAr: 'العلاقات',           icon: <Link2 size={18} />           },
-  ];
+  const { data: profile } = user
+    ? await supabase.from('profiles').select('name_en, name_ar').eq('id', user.id).single()
+    : { data: null };
 
   return (
-    <PortalShell
+    <AdminShell
       locale={locale}
-      portal="admin"
-      navItems={navItems}
-      titleEn="Control Center"
-      titleAr="مركز التحكم"
-      userNameEn="Yusuf Abdelatti"
-      userNameAr="يوسف عبد العاطي"
-      userRole="Administrator"
+      nameEn={profile?.name_en ?? 'Admin'}
+      nameAr={profile?.name_ar ?? 'مدير'}
     >
       {children}
-    </PortalShell>
+    </AdminShell>
   );
 }
