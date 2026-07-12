@@ -75,6 +75,12 @@ export function Header() {
           >
             {isAr ? 'EN' : 'عربي'}
           </Link>
+          <Link
+            href={`/${locale}/login`}
+            className="text-sm font-semibold text-teal border border-teal/40 hover:bg-teal-pale rounded-full px-5 py-2 transition-colors"
+          >
+            {isAr ? 'تسجيل الدخول' : 'Sign In'}
+          </Link>
           <a
             href={`/${locale}#contact`}
             className="text-sm font-semibold bg-teal text-white rounded-full px-5 py-2 hover:bg-teal-dark transition-colors shadow-sm shadow-teal/20"
@@ -122,6 +128,13 @@ export function Header() {
               </li>
             ))}
           </ul>
+          <Link
+            href={`/${locale}/login`}
+            onClick={() => setMobileOpen(false)}
+            className="flex items-center justify-center border border-teal text-teal text-sm font-semibold rounded-full px-6 py-3 hover:bg-teal-pale transition-colors w-full"
+          >
+            {isAr ? 'تسجيل الدخول' : 'Sign In'}
+          </Link>
           <a
             href={`/${locale}#contact`}
             onClick={() => setMobileOpen(false)}
