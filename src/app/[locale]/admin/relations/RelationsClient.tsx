@@ -8,8 +8,8 @@ type Child    = { id: string; name_en: string; name_ar: string; age: number; dia
 type Profile  = { id: string; name_en: string; name_ar: string };
 type Rel      = { child_id: string; parent_id: string | null; therapist_id: string | null };
 
-export default function RelationsClient({ locale, children, parents, therapists, relationships }: {
-  locale: string; children: Child[]; parents: Profile[]; therapists: Profile[]; relationships: Rel[];
+export default function RelationsClient({ locale, childList, parents, therapists, relationships }: {
+  locale: string; childList: Child[]; parents: Profile[]; therapists: Profile[]; relationships: Rel[];
 }) {
   const isAr = locale === 'ar';
   const router = useRouter();
@@ -17,6 +17,7 @@ export default function RelationsClient({ locale, children, parents, therapists,
   const [saved, setSaved]         = useState<string>('');
   const [isPending, startTransition] = useTransition();
 
+  const children = childList;
   const relMap = Object.fromEntries(relationships.map(r => [r.child_id, r]));
 
   const filtered = children.filter(c =>

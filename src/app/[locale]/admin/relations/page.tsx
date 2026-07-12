@@ -12,7 +12,7 @@ export default async function AdminRelationsPage({ params: { locale } }: { param
   return (
     <RelationsClient
       locale={locale}
-      children={children ?? []}
+      childList={children ?? []}
       parents={(profiles ?? []).filter(p => p.role === 'parent')}
       therapists={(profiles ?? []).filter(p => p.role === 'therapist')}
       relationships={relationships ?? []}

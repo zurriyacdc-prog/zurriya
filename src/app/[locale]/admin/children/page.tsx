@@ -11,7 +11,7 @@ export default async function AdminChildrenPage({ params: { locale } }: { params
   return (
     <ChildrenClient
       locale={locale}
-      children={children ?? []}
+      childList={children ?? []}
       parents={(profiles ?? []).filter(p => p.role === 'parent')}
       therapists={(profiles ?? []).filter(p => p.role === 'therapist')}
     />

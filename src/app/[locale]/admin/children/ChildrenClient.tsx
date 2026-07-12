@@ -7,11 +7,12 @@ import { createChild, archiveChild } from '@/lib/supabase/admin-actions';
 type Child = { id: string; name_en: string; name_ar: string; age: number; diagnosis_en: string; diagnosis_ar: string; status: string };
 type Profile = { id: string; name_en: string; name_ar: string; role: string };
 
-export default function ChildrenClient({ locale, children, parents, therapists }: {
-  locale: string; children: Child[]; parents: Profile[]; therapists: Profile[];
+export default function ChildrenClient({ locale, childList, parents, therapists }: {
+  locale: string; childList: Child[]; parents: Profile[]; therapists: Profile[];
 }) {
   const isAr = locale === 'ar';
   const router = useRouter();
+  const children = childList;
   const [creating, setCreating]   = useState(false);
   const [search, setSearch]       = useState('');
   const [feedback, setFeedback]   = useState('');
