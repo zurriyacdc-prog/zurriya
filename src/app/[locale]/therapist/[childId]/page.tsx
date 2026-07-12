@@ -1,113 +1,87 @@
-import Link             from 'next/link';
-import { CHILD }        from '@/lib/portal-mock';
-import { ProgressBar }  from '@/components/portal/ui/ProgressBar';
-import { ProgressRing } from '@/components/portal/ui/ProgressRing';
+import Link            from 'next/link';
+import { notFound }   from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 
-export default function TherapistChildProfile({
+export default async function TherapistChildOverview({
   params: { locale, childId },
 }: {
   params: { locale: string; childId: string };
 }) {
   const isAr = locale === 'ar';
-  const base = `/${locale}/therapist/${childId}`;
-  const c    = CHILD;
+  const base  = `/${locale}/therapist/${childId}`;
+  const supabase = await createClient();
+
+  const [{ data: child }, { count: goalCount }, { count: sessionCount }, { count: reportCount }, { data: rel }] =
+    await Promise.all([
+      supabase.from('children').select('*').eq('id', childId).single(),
+      supabase.from('goals').select('*', { count: 'exact', head: true }).eq('child_id', childId).eq('is_active', true),
+      supabase.from('sessions').select('*', { count: 'exact', head: true }).eq('child_id', childId),
+      supabase.from('reports').select('*', { count: 'exact', head: true }).eq('child_id', childId),
+      supabase.from('child_relationships').select('parent_id').eq('child_id', childId).single(),
+    ]);
+
+  if (!child) notFound();
+
+  const stats = [
+    { labelEn: 'Active Goals', labelAr: 'أهداف نشطة', val: goalCount ?? 0,    icon: '🎯', color: 'bg-teal-pale text-teal'  },
+    { labelEn: 'Sessions',     labelAr: 'الجلسات',     val: sessionCount ?? 0, icon: '📅', color: 'bg-sage-pale text-sage'  },
+    { labelEn: 'Reports',      labelAr: 'التقارير',    val: reportCount ?? 0,  icon: '📄', color: 'bg-coral-pale text-coral' },
+    { labelEn: 'Status',       labelAr: 'الحالة',      val: child.status,      icon: '✅', color: 'bg-gold-pale text-gold'  },
+  ];
+
+  const shortcuts = [
+    { href: `${base}/sessions`, labelEn: 'Record Session', labelAr: 'تسجيل جلسة', icon: '📝', color: 'bg-teal text-white' },
+    { href: `${base}/timeline`, labelEn: 'Add Event',      labelAr: 'إضافة حدث',  icon: '📌', color: 'bg-sage text-white' },
+    { href: `${base}/reports`,  labelEn: 'Upload Report',  labelAr: 'رفع تقرير',  icon: '📤', color: 'bg-coral text-white' },
+    { href: `/${locale}/parent`, labelEn: 'Parent View',   labelAr: 'عرض الأهل',  icon: '👁️', color: 'bg-ink/10 text-ink'  },
+  ];
 
   return (
-    <div className="p-5 md:p-8 space-y-5 max-w-2xl mx-auto">
+    <div className="p-5 md:p-8 max-w-2xl mx-auto space-y-6">
 
-      {/* Quick stats */}
+      {/* Stats */}
       <div className="grid grid-cols-2 gap-3">
-        {[
-          { labelEn: 'Active Goals',     labelAr: 'الأهداف النشطة',  val: c.statsEn.activeGoals,    valAr: c.statsAr.activeGoals,    color: 'bg-teal-pale   text-teal'   },
-          { labelEn: 'Sessions',         labelAr: 'الجلسات',          val: c.statsEn.sessions,       valAr: c.statsAr.sessions,       color: 'bg-sage-pale   text-sage'   },
-          { labelEn: 'Completed Goals',  labelAr: 'الأهداف المحققة',  val: c.statsEn.completedGoals, valAr: c.statsAr.completedGoals, color: 'bg-coral-pale  text-coral'  },
-          { labelEn: 'Reports',          labelAr: 'التقارير',         val: c.statsEn.reports,        valAr: c.statsAr.reports,        color: 'bg-gold-pale   text-gold'   },
-        ].map((s) => (
-          <div key={s.labelEn} className={`${s.color} rounded-2xl px-4 py-3 flex items-center gap-3`}>
-            <span className="text-2xl font-bold">{isAr ? s.valAr : s.val}</span>
-            <span className="text-xs font-medium opacity-70 leading-tight">{isAr ? s.labelAr : s.labelEn}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Diagnosis & Program */}
-      <div className="bg-white rounded-2xl border border-border shadow-sm divide-y divide-border/60">
-        {[
-          { icon: '🔍', labelEn: 'Diagnosis', labelAr: 'التشخيص', valEn: c.diagnosisEn, valAr: c.diagnosisAr },
-          { icon: '📚', labelEn: 'Program',   labelAr: 'البرنامج', valEn: c.programEn,   valAr: c.programAr   },
-          { icon: '👩‍⚕️', labelEn: 'Therapist', labelAr: 'المعالج',  valEn: c.therapist.nameEn, valAr: c.therapist.nameAr },
-          { icon: '📅', labelEn: 'Start Date',labelAr: 'تاريخ البدء',valEn: c.startDate, valAr: c.startDateAr },
-        ].map(({ icon, labelEn, labelAr, valEn, valAr }) => (
-          <div key={labelEn} className="flex items-center gap-3 px-5 py-3.5">
-            <span className="text-base flex-shrink-0">{icon}</span>
-            <span className="text-xs text-ink-2/60 w-20 flex-shrink-0">{isAr ? labelAr : labelEn}</span>
-            <span className="text-sm font-medium text-ink">{isAr ? valAr : valEn}</span>
-          </div>
-        ))}
-      </div>
-
-      {/* Overall progress */}
-      <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
-        <h3 className="text-sm font-semibold text-ink mb-4">{isAr ? 'التقدم العام' : 'Overall Progress'}</h3>
-        <div className="flex items-center gap-5 mb-5">
-          <div className="relative flex-shrink-0">
-            <ProgressRing pct={c.overallProgress} size={72} stroke={7} />
-            <div className="absolute inset-0 flex items-center justify-center rotate-90">
-              <span className="text-base font-bold text-ink">{c.overallProgress}%</span>
+        {stats.map((s) => (
+          <div key={s.labelEn} className={`${s.color} rounded-2xl p-4 flex items-center gap-3`}>
+            <span className="text-2xl">{s.icon}</span>
+            <div>
+              <p className="text-xl font-bold">{s.val}</p>
+              <p className="text-xs font-medium opacity-70">{isAr ? s.labelAr : s.labelEn}</p>
             </div>
           </div>
-          <div className="flex-1 space-y-2.5">
-            {c.progressByDomain.map((d) => (
-              <div key={d.domainEn}>
-                <div className="flex justify-between mb-1">
-                  <span className="text-[11px] text-ink-2">{isAr ? d.domainAr : d.domainEn}</span>
-                  <span className="text-[11px] font-semibold text-teal">{d.pct}%</span>
-                </div>
-                <ProgressBar pct={d.pct} height="h-1.5" />
-              </div>
-            ))}
-          </div>
+        ))}
+      </div>
+
+      {/* Info */}
+      <div className="bg-white rounded-2xl border border-border shadow-sm p-5">
+        <h3 className="text-sm font-semibold text-ink-2/60 uppercase tracking-widest mb-4">
+          {isAr ? 'معلومات الطفل' : 'Child Info'}
+        </h3>
+        <div className="space-y-0">
+          {[
+            { labelEn: 'Diagnosis',  labelAr: 'التشخيص',   val: isAr ? child.diagnosis_ar : child.diagnosis_en },
+            { labelEn: 'Age',        labelAr: 'العمر',      val: isAr ? `${child.age} سنوات` : `${child.age} years` },
+            { labelEn: 'Status',     labelAr: 'الحالة',     val: child.status },
+            { labelEn: 'Child ID',   labelAr: 'رقم الملف', val: child.id.slice(0, 8).toUpperCase() },
+          ].map(({ labelEn, labelAr, val }) => (
+            <div key={labelEn} className="flex items-center justify-between py-2.5 border-b border-border/60 last:border-0">
+              <span className="text-xs text-ink-2/60">{isAr ? labelAr : labelEn}</span>
+              <span className="text-sm font-medium text-ink">{val}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* Action shortcuts */}
+      {/* Quick actions */}
       <div className="grid grid-cols-2 gap-3">
-        {[
-          { href: `${base}/plan`,      labelEn: 'Treatment Plan',   labelAr: 'خطة العلاج',   emoji: '📋', color: 'bg-teal-pale   text-teal'  },
-          { href: `${base}/sessions`,  labelEn: 'Record Session',   labelAr: 'تسجيل جلسة',   emoji: '➕', color: 'bg-coral-pale  text-coral'  },
-          { href: `${base}/timeline`,  labelEn: 'Add Event',        labelAr: 'إضافة حدث',    emoji: '🗓️', color: 'bg-sage-pale   text-sage'   },
-          { href: `${base}/reports`,   labelEn: 'Upload Report',    labelAr: 'رفع تقرير',    emoji: '📤', color: 'bg-gold-pale   text-gold'   },
-        ].map((a) => (
-          <Link
-            key={a.href}
-            href={a.href}
-            className={`${a.color} rounded-2xl p-4 flex items-center gap-3 hover:opacity-80 transition-opacity`}
-          >
-            <span className="text-xl">{a.emoji}</span>
-            <span className="text-sm font-semibold">{isAr ? a.labelAr : a.labelEn}</span>
+        {shortcuts.map((s) => (
+          <Link key={s.href} href={s.href}
+            className={`${s.color} rounded-2xl px-4 py-4 flex items-center gap-3 shadow-sm hover:opacity-90 transition-opacity`}>
+            <span className="text-xl">{s.icon}</span>
+            <span className="text-sm font-semibold leading-tight">{isAr ? s.labelAr : s.labelEn}</span>
           </Link>
         ))}
       </div>
-
-      {/* Parent preview link */}
-      <Link
-        href={`/${locale}/parent`}
-        className="flex items-center gap-3 bg-white border border-teal/20 rounded-2xl px-5 py-4 hover:bg-teal-pale/30 transition-colors"
-      >
-        <div className="w-8 h-8 rounded-full bg-teal-pale flex items-center justify-center">
-          <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="text-teal">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
-          </svg>
-        </div>
-        <div className="flex-1">
-          <p className="text-sm font-semibold text-teal">{isAr ? 'معاينة كما يراه ولي الأمر' : 'Preview as Parent'}</p>
-          <p className="text-xs text-ink-2/60 mt-0.5">{isAr ? 'تحقق من تجربة الأسرة' : "See what the family sees"}</p>
-        </div>
-        <svg width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className={`text-teal/60 ${isAr ? 'rotate-180' : ''}`}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 18l6-6-6-6"/>
-        </svg>
-      </Link>
     </div>
   );
 }
