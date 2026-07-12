@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
-import Link          from 'next/link';
-import { usePathname } from 'next/navigation';
+import { useState }     from 'react';
+import Link             from 'next/link';
+import { usePathname }  from 'next/navigation';
+import { signOut }      from '@/lib/supabase/auth-actions';
 import Image         from 'next/image';
 import {
   LayoutDashboard, Map, FileText, CalendarDays, ImageIcon,
@@ -135,9 +136,11 @@ export function PortalShell({
               <p className="text-[10px] text-ink-2 truncate">{userRole}</p>
             )}
           </div>
-          <button className="text-ink-2/40 hover:text-ink-2 transition-colors" title="Sign out">
-            <LogOut size={15} />
-          </button>
+          <form action={signOut.bind(null, locale)}>
+            <button type="submit" className="text-ink-2/40 hover:text-ink-2 transition-colors" title={isAr ? 'تسجيل الخروج' : 'Sign out'}>
+              <LogOut size={15} />
+            </button>
+          </form>
         </div>
       </div>
     </div>

@@ -13,6 +13,10 @@ build/
 *.pem
 tsconfig.tsbuildinfo
 
+# secrets / scratch notes — never commit these
+*.md
+!README.md
+
 # local env files
 .env
 .env*.local
