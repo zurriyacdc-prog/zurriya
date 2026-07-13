@@ -1,12 +1,33 @@
 import { createClient } from './server';
 import { adminClient } from './admin';
 
+/** Find the active child linked to this parent (handles multiple rows safely) */
+async function resolveParentChild(userId: string) {
+  const { data: rels } = await adminClient
+    .from('child_relationships')
+    .select('child_id, therapist_id')
+    .eq('parent_id', userId);
+
+  if (!rels?.length) return null;
+
+  const ids = rels.map(r => r.child_id);
+  const { data: child } = await adminClient
+    .from('children')
+    .select('id')
+    .in('id', ids)
+    .neq('status', 'archived')
+    .limit(1)
+    .maybeSingle();
+
+  if (!child) return null;
+  return rels.find(r => r.child_id === child.id) ?? null;
+}
+
 export async function getParentChildId(): Promise<string | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: rel } = await adminClient
-    .from('child_relationships').select('child_id').eq('parent_id', user.id).single();
+  const rel = await resolveParentChild(user.id);
   return rel?.child_id ?? null;
 }
 
@@ -16,12 +37,7 @@ export async function getMyChildAsParent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: rel } = await adminClient
-    .from('child_relationships')
-    .select('child_id')
-    .eq('parent_id', user.id)
-    .single();
-
+  const rel = await resolveParentChild(user.id);
   if (!rel?.child_id) return null;
 
   const { data: child } = await supabase

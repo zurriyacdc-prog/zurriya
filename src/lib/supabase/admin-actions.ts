@@ -105,6 +105,17 @@ export async function archiveChild(childId: string) {
   revalidatePath('/[locale]/admin/children');
 }
 
+export async function restoreChild(childId: string) {
+  await adminClient.from('children').update({ status: 'active' }).eq('id', childId);
+  revalidatePath('/[locale]/admin/children');
+}
+
+export async function deleteChildForever(childId: string) {
+  await adminClient.from('child_relationships').delete().eq('child_id', childId);
+  await adminClient.from('children').delete().eq('id', childId);
+  revalidatePath('/[locale]/admin/children');
+}
+
 export async function saveRelationship(childId: string, parentId: string | null, therapistId: string | null) {
   await adminClient.from('child_relationships').delete().eq('child_id', childId);
   if (parentId || therapistId) {

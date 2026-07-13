@@ -2,23 +2,22 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { createChild, archiveChild } from '@/lib/supabase/admin-actions';
+import { createChild, archiveChild, restoreChild, deleteChildForever } from '@/lib/supabase/admin-actions';
 
-type Child = { id: string; name_en: string; name_ar: string; age: number; diagnosis_en: string; diagnosis_ar: string; status: string };
+type Child   = { id: string; name_en: string; name_ar: string; age: number; diagnosis_en: string; diagnosis_ar: string; status: string };
 type Profile = { id: string; name_en: string; name_ar: string; role: string };
 
-export default function ChildrenClient({ locale, childList, parents, therapists }: {
-  locale: string; childList: Child[]; parents: Profile[]; therapists: Profile[];
+export default function ChildrenClient({ locale, childList, archivedList, parents, therapists }: {
+  locale: string; childList: Child[]; archivedList: Child[]; parents: Profile[]; therapists: Profile[];
 }) {
   const isAr = locale === 'ar';
   const router = useRouter();
-  const children = childList;
   const [creating, setCreating]   = useState(false);
   const [search, setSearch]       = useState('');
   const [feedback, setFeedback]   = useState('');
   const [isPending, startTransition] = useTransition();
 
-  const filtered = children.filter((c) =>
+  const filtered = childList.filter((c) =>
     (isAr ? c.name_ar : c.name_en).toLowerCase().includes(search.toLowerCase())
   );
 
@@ -45,12 +44,30 @@ export default function ChildrenClient({ locale, childList, parents, therapists 
     });
   };
 
+  const handleRestore = (id: string) => {
+    startTransition(async () => {
+      await restoreChild(id);
+      router.refresh();
+    });
+  };
+
+  const handleDeleteForever = (id: string, name: string) => {
+    if (!confirm(isAr
+      ? `هل أنت متأكد من الحذف النهائي لـ "${name}"؟ لا يمكن التراجع عن هذا الإجراء.`
+      : `Permanently delete "${name}"? This cannot be undone.`
+    )) return;
+    startTransition(async () => {
+      await deleteChildForever(id);
+      router.refresh();
+    });
+  };
+
   return (
     <div className="p-5 md:p-8 max-w-2xl mx-auto space-y-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-ink">{isAr ? 'الأطفال' : 'Children'}</h1>
-          <p className="text-sm text-ink-2 mt-0.5">{children.length} {isAr ? 'طفل مسجل' : 'registered children'}</p>
+          <p className="text-sm text-ink-2 mt-0.5">{childList.length} {isAr ? 'طفل نشط' : 'active children'}</p>
         </div>
         <button onClick={() => { setCreating(!creating); setFeedback(''); }}
           className="flex items-center gap-1.5 bg-teal text-white text-sm font-semibold rounded-xl px-4 py-2.5 hover:bg-teal-dark transition-colors shadow-sm">
@@ -124,6 +141,7 @@ export default function ChildrenClient({ locale, childList, parents, therapists 
           style={{ direction: isAr ? 'rtl' : 'ltr' }} />
       </div>
 
+      {/* Active children */}
       <div className="space-y-3">
         {filtered.length ? filtered.map((child) => (
           <div key={child.id} className="bg-white rounded-2xl border border-border shadow-sm px-5 py-4 flex items-center gap-4">
@@ -140,6 +158,7 @@ export default function ChildrenClient({ locale, childList, parents, therapists 
               </p>
             </div>
             <button onClick={() => handleArchive(child.id)} disabled={isPending}
+              title={isAr ? 'أرشفة' : 'Archive'}
               className="text-ink-2/40 hover:text-coral p-1.5 transition-colors">
               <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
@@ -148,10 +167,61 @@ export default function ChildrenClient({ locale, childList, parents, therapists 
           </div>
         )) : (
           <div className="bg-white rounded-2xl border border-border shadow-sm p-8 text-center">
-            <p className="text-sm text-ink-2/50">{isAr ? 'لا يوجد أطفال مسجلون بعد' : 'No children registered yet'}</p>
+            <p className="text-sm text-ink-2/50">{isAr ? 'لا يوجد أطفال نشطون' : 'No active children'}</p>
           </div>
         )}
       </div>
+
+      {/* Archived section */}
+      {archivedList.length > 0 && (
+        <div className="space-y-3">
+          <div className="flex items-center gap-3">
+            <div className="h-px flex-1 bg-border" />
+            <p className="text-xs font-bold text-ink-2/40 uppercase tracking-widest">
+              {isAr ? 'الأرشيف' : 'Archive'} ({archivedList.length})
+            </p>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          {archivedList.map((child) => (
+            <div key={child.id} className="bg-paper rounded-2xl border border-border/60 px-5 py-4 flex items-center gap-4 opacity-70">
+              <div className="w-10 h-10 rounded-full bg-ink/10 flex items-center justify-center flex-shrink-0 text-lg grayscale">👦</div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-0.5">
+                  <p className="text-sm font-semibold text-ink-2">{isAr ? child.name_ar : child.name_en}</p>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-ink/10 text-ink-2/60">
+                    {isAr ? 'مؤرشف' : 'Archived'}
+                  </span>
+                </div>
+                <p className="text-xs text-ink-2/50">
+                  {isAr ? `${child.age} سنوات · ${child.diagnosis_ar}` : `Age ${child.age} · ${child.diagnosis_en}`}
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => handleRestore(child.id)}
+                  disabled={isPending}
+                  title={isAr ? 'استعادة' : 'Restore'}
+                  className="flex items-center gap-1 text-xs font-semibold text-teal hover:text-teal-dark px-2.5 py-1.5 rounded-lg hover:bg-teal-pale transition-colors">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a9 9 0 0115 0M20 15a9 9 0 01-15 0"/>
+                  </svg>
+                  {isAr ? 'استعادة' : 'Restore'}
+                </button>
+                <button
+                  onClick={() => handleDeleteForever(child.id, isAr ? child.name_ar : child.name_en)}
+                  disabled={isPending}
+                  title={isAr ? 'حذف نهائي' : 'Delete forever'}
+                  className="flex items-center gap-1 text-xs font-semibold text-coral hover:text-coral/80 px-2.5 py-1.5 rounded-lg hover:bg-coral/10 transition-colors">
+                  <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                  {isAr ? 'حذف نهائي' : 'Delete'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

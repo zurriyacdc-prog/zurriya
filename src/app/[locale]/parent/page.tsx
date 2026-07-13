@@ -14,12 +14,21 @@ export default async function ParentHome({ params: { locale } }: { params: { loc
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/${locale}/login`);
 
-  // Use adminClient to bypass RLS — parent users can't read child_relationships via RLS
-  const { data: rel } = await adminClient
+  // Fetch all relationships for this parent, then pick the active child
+  const { data: allRels } = await adminClient
     .from('child_relationships')
     .select('child_id, therapist_id')
-    .eq('parent_id', user.id)
-    .single();
+    .eq('parent_id', user.id);
+
+  let rel: { child_id: string; therapist_id: string | null } | null = null;
+  if (allRels?.length) {
+    const { data: activeChild } = await adminClient
+      .from('children').select('id')
+      .in('id', allRels.map(r => r.child_id))
+      .neq('status', 'archived')
+      .limit(1).maybeSingle();
+    if (activeChild) rel = allRels.find(r => r.child_id === activeChild.id) ?? null;
+  }
 
   if (!rel?.child_id) {
     return (
