@@ -101,7 +101,7 @@ export default function ReportsClient({
             className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal/20" />
           <FileUpload
             childId={childId} folder="reports"
-            accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.html,.htm,image/*"
             label="Choose file (PDF, Word, Image)"
             labelAr="اختر ملفاً (PDF، Word، صورة)"
             locale={locale}

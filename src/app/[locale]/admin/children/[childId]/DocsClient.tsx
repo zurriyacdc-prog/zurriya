@@ -95,7 +95,7 @@ export default function DocsClient({
 
           <FileUpload
             childId={childId} folder="reports"
-            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,image/*"
+            accept=".pdf,.doc,.docx,.html,.htm,.jpg,.jpeg,.png,image/*"
             label="Choose file" labelAr="اختر ملفاً"
             locale={locale}
             onUploaded={(url, size) => { setUploadedUrl(url); setUploadedSize(size); }}
