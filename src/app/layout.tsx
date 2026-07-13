@@ -10,7 +10,9 @@ export const metadata: Metadata = {
   description:
     'Zurriya is a child and adolescent development center in Cairo, Egypt — offering comprehensive assessments, individualized intervention, and parent partnership programs.',
   icons: {
-    icon: '/logo/logo-mark.png',
+    icon: '/logo/logo.png',
+    apple: '/logo/logo.png',
+    shortcut: '/logo/logo.png',
   },
 };
 
