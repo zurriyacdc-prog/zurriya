@@ -24,7 +24,7 @@ export async function notifyParent({ childId, type, titleEn, titleAr, bodyEn, bo
   if (!rel?.parent_id) return;
 
   // Insert in-app notification (fast, awaited)
-  await adminClient.from('notifications').insert({
+  const { error: insertError } = await adminClient.from('notifications').insert({
     child_id: childId,
     parent_id: rel.parent_id,
     type,
@@ -33,6 +33,11 @@ export async function notifyParent({ childId, type, titleEn, titleAr, bodyEn, bo
     body_en:  bodyEn ?? null,
     body_ar:  bodyAr ?? null,
   });
+
+  if (insertError) {
+    console.error('[notify] Failed to insert notification:', insertError.message);
+    return;
+  }
 
   // Send push in parallel — don't block the action on it
   sendPush(rel.parent_id, { titleEn, titleAr, bodyEn: bodyEn ?? '', bodyAr: bodyAr ?? '' }).catch(() => {});

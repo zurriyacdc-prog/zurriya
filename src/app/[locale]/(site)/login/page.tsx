@@ -62,6 +62,18 @@ export default function LoginPage({ params: { locale } }: { params: { locale: st
             </p>
           </div>
 
+          {/* No sign-up notice */}
+          <div className="bg-teal-pale border border-teal/20 rounded-2xl px-4 py-3.5 text-center space-y-1">
+            <p className="text-xs font-semibold text-teal-dark">
+              {isAr ? 'لا يوجد تسجيل ذاتي' : 'No self-registration'}
+            </p>
+            <p className="text-[11px] text-ink-2/70 leading-relaxed">
+              {isAr
+                ? 'البوابات تُنشأ من قِبَل المركز فقط. ستتلقى بريدك الإلكتروني وكلمة المرور من فريقنا بعد الاستشارة الأولى.'
+                : 'Portals are created by the center only. You receive your email and password from our team after your initial consultation.'}
+            </p>
+          </div>
+
           {error && (
             <div className="bg-coral/10 border border-coral/20 rounded-xl px-4 py-3 text-sm text-coral font-medium text-center">
               {error}

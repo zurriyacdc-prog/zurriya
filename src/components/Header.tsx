@@ -75,6 +75,12 @@ export function Header() {
           >
             {isAr ? 'EN' : 'عربي'}
           </Link>
+          <Link
+            href={`/${locale}/login`}
+            className="text-sm font-semibold text-ink-2 hover:text-teal transition-colors border border-border hover:border-teal/40 rounded-full px-4 py-1.5"
+          >
+            {isAr ? 'تسجيل الدخول' : 'Sign In'}
+          </Link>
           <a
             href={`/${locale}#contact`}
             className="text-sm font-semibold bg-teal text-white rounded-full px-5 py-2 hover:bg-teal-dark transition-colors shadow-sm shadow-teal/20"
@@ -122,13 +128,22 @@ export function Header() {
               </li>
             ))}
           </ul>
-          <a
-            href={`/${locale}#contact`}
-            onClick={() => setMobileOpen(false)}
-            className="flex items-center justify-center bg-teal text-white text-sm font-semibold rounded-full px-6 py-3 hover:bg-teal-dark transition-colors w-full"
-          >
-            {isAr ? 'احجز استشارة' : 'Book a Consultation'}
-          </a>
+          <div className="flex flex-col gap-3">
+            <a
+              href={`/${locale}#contact`}
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center bg-teal text-white text-sm font-semibold rounded-full px-6 py-3 hover:bg-teal-dark transition-colors w-full"
+            >
+              {isAr ? 'احجز استشارة' : 'Book a Consultation'}
+            </a>
+            <Link
+              href={`/${locale}/login`}
+              onClick={() => setMobileOpen(false)}
+              className="flex items-center justify-center border border-border text-sm font-semibold text-ink-2 rounded-full px-6 py-3 hover:border-teal/40 hover:text-teal transition-colors w-full"
+            >
+              {isAr ? 'تسجيل الدخول للبوابة' : 'Portal Sign In'}
+            </Link>
+          </div>
         </div>
       )}
     </header>
