@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { createClient } from './server';
 import { adminClient } from './admin';
+import { notifyParent } from './notify';
 
 async function getUser() {
   const supabase = await createClient();
@@ -15,19 +16,32 @@ export async function recordSession(formData: FormData) {
   const user = await getUser();
   if (!user) return { error: 'Unauthorized' };
 
-  const childId = formData.get('child_id') as string;
+  const childId  = formData.get('child_id') as string;
+  const type     = formData.get('type') as string;
+  const duration = Number(formData.get('duration_minutes') || 60);
+
   const { error } = await adminClient.from('sessions').insert({
     child_id:         childId,
     therapist_id:     user.id,
     session_date:     formData.get('session_date') as string,
-    type:             formData.get('type') as string,
-    duration_minutes: Number(formData.get('duration_minutes') || 60),
+    type,
+    duration_minutes: duration,
     engagement_score: Number(formData.get('engagement_score') || 0) || null,
     notes_en:         formData.get('notes_en') as string || null,
     notes_ar:         formData.get('notes_ar') as string || null,
   });
 
   if (error) return { error: error.message };
+
+  notifyParent({
+    childId,
+    type: 'session',
+    titleEn: 'New session recorded',
+    titleAr: 'تم تسجيل جلسة جديدة',
+    bodyEn: `${type} session — ${duration} minutes`,
+    bodyAr: `جلسة ${type} — ${duration} دقيقة`,
+  }).catch(() => {});
+
   revalidatePath(`/[locale]/therapist/${childId}/sessions`);
   revalidatePath(`/[locale]/parent/sessions`);
   return { success: true };
@@ -38,12 +52,15 @@ export async function addTimelineEvent(formData: FormData) {
   const user = await getUser();
   if (!user) return { error: 'Unauthorized' };
 
-  const childId = formData.get('child_id') as string;
+  const childId  = formData.get('child_id') as string;
+  const titleEn  = formData.get('title_en') as string;
+  const titleAr  = formData.get('title_ar') as string || titleEn;
+
   const { error } = await adminClient.from('timeline_events').insert({
     child_id:        childId,
     type:            formData.get('type') as string,
-    title_en:        formData.get('title_en') as string,
-    title_ar:        formData.get('title_ar') as string || formData.get('title_en') as string,
+    title_en:        titleEn,
+    title_ar:        titleAr,
     description_en:  formData.get('description_en') as string || null,
     description_ar:  formData.get('description_ar') as string || null,
     event_date:      formData.get('event_date') as string,
@@ -51,6 +68,16 @@ export async function addTimelineEvent(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  notifyParent({
+    childId,
+    type: 'timeline',
+    titleEn: 'New milestone added',
+    titleAr: 'تمت إضافة معلم جديد',
+    bodyEn: titleEn,
+    bodyAr: titleAr,
+  }).catch(() => {});
+
   revalidatePath(`/[locale]/therapist/${childId}/timeline`);
   revalidatePath(`/[locale]/parent/journey`);
   return { success: true };
@@ -68,11 +95,14 @@ export async function addGoal(formData: FormData) {
   if (!user) return { error: 'Unauthorized' };
 
   const childId = formData.get('child_id') as string;
+  const titleEn = formData.get('title_en') as string;
+  const titleAr = formData.get('title_ar') as string || titleEn;
+
   const { error } = await adminClient.from('goals').insert({
     child_id:   childId,
     type:       formData.get('type') as string,
-    title_en:   formData.get('title_en') as string,
-    title_ar:   formData.get('title_ar') as string || formData.get('title_en') as string,
+    title_en:   titleEn,
+    title_ar:   titleAr,
     domain:     formData.get('domain') as string || null,
     color:      formData.get('color') as string || '#1B5E6E',
     progress:   0,
@@ -81,6 +111,16 @@ export async function addGoal(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  notifyParent({
+    childId,
+    type: 'goal',
+    titleEn: 'New goal added',
+    titleAr: 'تمت إضافة هدف جديد',
+    bodyEn: titleEn,
+    bodyAr: titleAr,
+  }).catch(() => {});
+
   revalidatePath(`/[locale]/therapist/${childId}/plan`);
   revalidatePath(`/[locale]/parent/plan`);
   return { success: true };
@@ -106,7 +146,24 @@ export async function addObjective(goalId: string, textEn: string, textAr: strin
 }
 
 export async function toggleObjective(objectiveId: string, isDone: boolean, childId: string) {
-  await adminClient.from('objectives').update({ is_done: isDone }).eq('id', objectiveId);
+  const { data: obj } = await adminClient
+    .from('objectives')
+    .update({ is_done: isDone })
+    .eq('id', objectiveId)
+    .select('text_en, text_ar')
+    .single();
+
+  if (isDone && obj) {
+    notifyParent({
+      childId,
+      type: 'objective',
+      titleEn: 'Objective completed ✓',
+      titleAr: 'تم إكمال هدف فرعي ✓',
+      bodyEn: obj.text_en,
+      bodyAr: obj.text_ar || obj.text_en,
+    }).catch(() => {});
+  }
+
   revalidatePath(`/[locale]/therapist/${childId}/plan`);
   revalidatePath(`/[locale]/parent/plan`);
 }
@@ -140,17 +197,30 @@ export async function addReinforcer(formData: FormData) {
   if (!user) return { error: 'Unauthorized' };
 
   const childId = formData.get('child_id') as string;
+  const nameEn  = formData.get('name_en') as string;
+  const nameAr  = formData.get('name_ar') as string || nameEn;
+
   const { error } = await adminClient.from('reinforcers').insert({
-    child_id:   childId,
-    name_en:    formData.get('name_en') as string,
-    name_ar:    formData.get('name_ar') as string || formData.get('name_en') as string,
-    emoji:      formData.get('emoji') as string || '⭐',
-    category:   formData.get('category') as string,
+    child_id:    childId,
+    name_en:     nameEn,
+    name_ar:     nameAr,
+    emoji:       formData.get('emoji') as string || '⭐',
+    category:    formData.get('category') as string,
     is_favorite: false,
-    created_by: user.id,
+    created_by:  user.id,
   });
 
   if (error) return { error: error.message };
+
+  notifyParent({
+    childId,
+    type: 'reinforcer',
+    titleEn: 'New reinforcer added',
+    titleAr: 'تمت إضافة معزز جديد',
+    bodyEn: nameEn,
+    bodyAr: nameAr,
+  }).catch(() => {});
+
   revalidatePath(`/[locale]/therapist/${childId}/reinforcers`);
   revalidatePath(`/[locale]/parent/reinforcers`);
   return { success: true };
@@ -174,17 +244,30 @@ export async function addReport(formData: FormData) {
   if (!user) return { error: 'Unauthorized' };
 
   const childId = formData.get('child_id') as string;
+  const nameEn  = formData.get('name_en') as string;
+  const nameAr  = formData.get('name_ar') as string || nameEn;
+
   const { error } = await adminClient.from('reports').insert({
     child_id:    childId,
     uploaded_by: user.id,
     type:        formData.get('type') as string || 'other',
-    name_en:     formData.get('name_en') as string,
-    name_ar:     formData.get('name_ar') as string || formData.get('name_en') as string,
+    name_en:     nameEn,
+    name_ar:     nameAr,
     file_url:    formData.get('file_url') as string,
     file_size:   formData.get('file_size') as string || null,
   });
 
   if (error) return { error: error.message };
+
+  notifyParent({
+    childId,
+    type: 'report',
+    titleEn: 'New document uploaded',
+    titleAr: 'تم رفع وثيقة جديدة',
+    bodyEn: nameEn,
+    bodyAr: nameAr,
+  }).catch(() => {});
+
   revalidatePath(`/[locale]/therapist/${childId}/reports`);
   revalidatePath(`/[locale]/parent/reports`);
   return { success: true };
@@ -201,11 +284,13 @@ export async function addGalleryItem(formData: FormData) {
   const user = await getUser();
   if (!user) return { error: 'Unauthorized' };
 
-  const childId = formData.get('child_id') as string;
+  const childId   = formData.get('child_id') as string;
+  const mediaType = formData.get('media_type') as string || 'photo';
+
   const { error } = await adminClient.from('gallery').insert({
     child_id:    childId,
     uploaded_by: user.id,
-    media_type:  formData.get('media_type') as string || 'photo',
+    media_type:  mediaType,
     url:         formData.get('url') as string,
     caption_en:  formData.get('caption_en') as string || null,
     caption_ar:  formData.get('caption_ar') as string || null,
@@ -213,6 +298,14 @@ export async function addGalleryItem(formData: FormData) {
   });
 
   if (error) return { error: error.message };
+
+  notifyParent({
+    childId,
+    type: 'gallery',
+    titleEn: mediaType === 'video' ? 'New video added to gallery' : 'New photo added to gallery',
+    titleAr: mediaType === 'video' ? 'تمت إضافة فيديو جديد إلى المعرض' : 'تمت إضافة صورة جديدة إلى المعرض',
+  }).catch(() => {});
+
   revalidatePath(`/[locale]/therapist/${childId}/gallery`);
   revalidatePath(`/[locale]/parent/gallery`);
   return { success: true };

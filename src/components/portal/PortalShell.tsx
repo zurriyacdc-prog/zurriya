@@ -30,12 +30,14 @@ type Props = {
   userNameAr?: string;
   userRole?:   string;
   fab?:        React.ReactNode;
+  /** Extra elements rendered in the mobile top bar (e.g. notification bell) */
+  headerExtra?: React.ReactNode;
 };
 
 export function PortalShell({
   locale, portal, navItems, titleEn, titleAr, children,
   userNameEn = 'Sara Mahmoud', userNameAr = 'سارة محمود',
-  userRole = '', fab,
+  userRole = '', fab, headerExtra,
 }: Props) {
   const isAr     = locale === 'ar';
   const pathname = usePathname();
@@ -189,6 +191,7 @@ export function PortalShell({
             <Image src="/logo/logo.png" alt="Zurriya" width={28} height={28} className="opacity-90" />
             <span className="text-white font-bold text-sm">{isAr ? titleAr : titleEn}</span>
           </div>
+          {headerExtra}
           <Link
             href={otherLocalePath}
             className="text-white/70 hover:text-white text-xs font-semibold border border-white/30 rounded-full px-2.5 py-1"
