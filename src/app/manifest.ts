@@ -5,7 +5,7 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'Zurriya — Child Development Center',
     short_name: 'Zurriya',
     description: 'Family & therapist portal for Zurriya Child Development Center',
-    start_url: '/en',
+    start_url: '/en/login',
     display: 'standalone',
     background_color: '#FAFAF5',
     theme_color: '#1B5E6E',
