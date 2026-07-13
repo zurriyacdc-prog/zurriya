@@ -109,8 +109,15 @@ export function PortalShell({
         </ul>
       </nav>
 
-      {/* Language toggle */}
-      <div className="px-3 pb-2">
+      {/* Language + Settings */}
+      <div className="px-3 pb-2 space-y-0.5">
+        <Link
+          href={`/${locale}/${portal}/settings`}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-ink-2 hover:bg-paper transition-colors"
+        >
+          <Settings size={16} className="text-ink-2/60" />
+          <span>{isAr ? 'الإعدادات' : 'Settings'}</span>
+        </Link>
         <Link
           href={otherLocalePath}
           className="flex items-center gap-2 px-3 py-2 rounded-xl text-sm text-ink-2 hover:bg-paper transition-colors"

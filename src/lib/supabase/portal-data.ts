@@ -1,5 +1,14 @@
 import { createClient } from './server';
 
+export async function getParentChildId(): Promise<string | null> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return null;
+  const { data: rel } = await supabase
+    .from('child_relationships').select('child_id').eq('parent_id', user.id).single();
+  return rel?.child_id ?? null;
+}
+
 /** Get the child linked to the currently logged-in parent */
 export async function getMyChildAsParent() {
   const supabase = await createClient();
