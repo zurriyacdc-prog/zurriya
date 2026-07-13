@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { addGalleryItem, deleteGalleryItem } from '@/lib/supabase/therapist-actions';
+import FileUpload from '@/components/portal/FileUpload';
 
 type GalleryItem = {
   id: string; media_type: string; url: string;
@@ -19,6 +20,7 @@ export default function GalleryClient({
 
   const [tab, setTab]                = useState<'photo' | 'video'>('photo');
   const [uploading, setUploading]    = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState('');
   const [error, setError]            = useState('');
   const [isPending, startTransition] = useTransition();
 
@@ -33,14 +35,17 @@ export default function GalleryClient({
   function handleUpload(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (!uploadedUrl) { setError(isAr ? 'يرجى رفع ملف أولاً' : 'Please upload a file first'); return; }
     const fd = new FormData(formRef.current!);
     fd.set('child_id', childId);
     fd.set('media_type', tab);
+    fd.set('url', uploadedUrl);
     fd.set('taken_at', new Date().toISOString());
     startTransition(async () => {
       const result = await addGalleryItem(fd);
       if (result?.error) { setError(result.error); return; }
       setUploading(false);
+      setUploadedUrl('');
       formRef.current?.reset();
       router.refresh();
     });
@@ -82,8 +87,20 @@ export default function GalleryClient({
         <form ref={formRef} onSubmit={handleUpload} className="bg-teal-pale border border-teal/20 rounded-2xl p-5 mb-5 space-y-3">
           <p className="text-sm font-bold text-ink">{isAr ? `إضافة ${tab === 'photo' ? 'صورة' : 'فيديو'}` : `Add ${tab === 'photo' ? 'Photo' : 'Video'}`}</p>
           {error && <p className="text-xs text-coral">{error}</p>}
-          <input required name="url" type="url" placeholder={isAr ? 'رابط الملف...' : 'File URL...'}
-            className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal/20" />
+          <FileUpload
+            childId={childId} folder="gallery"
+            accept={tab === 'photo' ? 'image/*' : 'video/*'}
+            label={tab === 'photo' ? 'Choose photo' : 'Choose video'}
+            labelAr={tab === 'photo' ? 'اختر صورة' : 'اختر فيديو'}
+            locale={locale}
+            onUploaded={(url) => { setUploadedUrl(url); }}
+          />
+          {uploadedUrl && (
+            <p className="text-xs text-sage flex items-center gap-1">
+              <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+              {isAr ? 'تم الرفع بنجاح' : 'File uploaded'}
+            </p>
+          )}
           <input name="caption_en" type="text" placeholder={isAr ? 'وصف (إنجليزي)' : 'Caption (English)'}
             className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal/20" />
           <input name="caption_ar" type="text" dir="rtl" placeholder="وصف (عربي)"

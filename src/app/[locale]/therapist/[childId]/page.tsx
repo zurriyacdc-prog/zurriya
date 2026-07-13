@@ -1,6 +1,7 @@
 import Link            from 'next/link';
 import { notFound }   from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import AvatarPicker, { AvatarDisplay } from '@/components/portal/AvatarPicker';
 
 export default async function TherapistChildOverview({
   params: { locale, childId },
@@ -38,6 +39,16 @@ export default async function TherapistChildOverview({
 
   return (
     <div className="p-5 md:p-8 max-w-2xl mx-auto space-y-6">
+
+      {/* Avatar with edit button */}
+      <div className="flex items-center gap-4">
+        <AvatarPicker childId={childId} currentAvatar={child.avatar_emoji || '👦'} locale={locale} />
+        <div>
+          <p className="text-sm font-bold text-ink">{isAr ? child.name_ar : child.name_en}</p>
+          <p className="text-xs text-ink-2/60">{isAr ? `${child.age} سنوات` : `Age ${child.age}`}</p>
+          <p className="text-[10px] text-teal mt-0.5">{isAr ? 'انقر على الصورة للتغيير' : 'Tap avatar to change'}</p>
+        </div>
+      </div>
 
       {/* Stats */}
       <div className="grid grid-cols-2 gap-3">

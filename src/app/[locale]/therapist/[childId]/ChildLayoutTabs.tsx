@@ -1,7 +1,8 @@
 'use client';
 
-import Link           from 'next/link';
-import { usePathname } from 'next/navigation';
+import Link             from 'next/link';
+import { usePathname }  from 'next/navigation';
+import { AvatarDisplay } from '@/components/portal/AvatarPicker';
 
 const TABS = [
   { seg: '',             labelEn: 'Overview',  labelAr: 'نظرة عامة' },
@@ -45,9 +46,7 @@ export default function ChildLayoutTabs({
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7"/>
           </svg>
         </Link>
-        <div className="w-10 h-10 rounded-full bg-teal-pale flex items-center justify-center text-xl">
-          {child.avatar_emoji || '👦'}
-        </div>
+        <AvatarDisplay avatar={child.avatar_emoji || '👦'} size="md" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <p className="text-sm font-bold text-ink">{isAr ? child.name_ar : child.name_en}</p>

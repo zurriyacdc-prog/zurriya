@@ -3,6 +3,7 @@ import { redirect }    from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { ProgressBar }  from '@/components/portal/ui/ProgressBar';
 import { ProgressRing } from '@/components/portal/ui/ProgressRing';
+import { AvatarDisplay } from '@/components/portal/AvatarPicker';
 
 export default async function ParentHome({ params: { locale } }: { params: { locale: string } }) {
   const isAr = locale === 'ar';
@@ -70,8 +71,8 @@ export default async function ParentHome({ params: { locale } }: { params: { loc
         <div className="bg-teal h-16" />
         <div className="px-6 pb-6">
           <div className="flex items-end justify-between -mt-8 mb-4">
-            <div className="w-16 h-16 rounded-2xl bg-teal-pale border-4 border-white flex items-center justify-center shadow-sm">
-              <span className="text-2xl">{child.avatar_emoji ?? '👦'}</span>
+            <div className="rounded-2xl border-4 border-white shadow-sm">
+              <AvatarDisplay avatar={child.avatar_emoji || '👦'} size="lg" />
             </div>
             <span className="text-[11px] font-semibold text-ink-2/60 bg-paper px-2 py-1 rounded-lg border border-border font-mono">
               {child.id.slice(0, 8).toUpperCase()}
@@ -83,7 +84,9 @@ export default async function ParentHome({ params: { locale } }: { params: { loc
 
           <div className="grid grid-cols-1 gap-0 mt-5">
             {[
-              { labelEn: 'Therapist',  labelAr: 'المعالج',  val: therapistProfile ? (therapistProfile.name_en || therapistProfile.name_ar || '—') : '—' },
+              { labelEn: 'Therapist',  labelAr: 'المعالج',  val: therapistProfile
+                  ? (isAr ? (therapistProfile.name_ar || therapistProfile.name_en || '') : (therapistProfile.name_en || therapistProfile.name_ar || ''))
+                  : (isAr ? 'لم يتم التعيين بعد' : 'Not assigned yet') },
               { labelEn: 'Diagnosis',  labelAr: 'التشخيص',  val: isAr ? child.diagnosis_ar : child.diagnosis_en },
               { labelEn: 'Status',     labelAr: 'الحالة',   val: isAr ? (child.status === 'active' ? 'نشط' : child.status) : child.status },
             ].map(({ labelEn, labelAr, val }) => (

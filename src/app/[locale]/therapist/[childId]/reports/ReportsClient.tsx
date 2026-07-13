@@ -3,6 +3,7 @@
 import { useState, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { addReport, deleteReport } from '@/lib/supabase/therapist-actions';
+import FileUpload from '@/components/portal/FileUpload';
 
 type Report = {
   id: string; type: string; name_en: string; name_ar: string;
@@ -34,6 +35,8 @@ export default function ReportsClient({
 
   const [tab, setTab]                = useState<typeof TABS[number]>('all');
   const [uploading, setUploading]    = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState('');
+  const [uploadedSize, setUploadedSize] = useState('');
   const [error, setError]            = useState('');
   const [isPending, startTransition] = useTransition();
 
@@ -42,12 +45,17 @@ export default function ReportsClient({
   function handleUpload(e: React.FormEvent) {
     e.preventDefault();
     setError('');
+    if (!uploadedUrl) { setError(isAr ? 'يرجى رفع ملف أولاً' : 'Please upload a file first'); return; }
     const fd = new FormData(formRef.current!);
     fd.set('child_id', childId);
+    fd.set('file_url', uploadedUrl);
+    fd.set('file_size', uploadedSize);
     startTransition(async () => {
       const result = await addReport(fd);
       if (result?.error) { setError(result.error); return; }
       setUploading(false);
+      setUploadedUrl('');
+      setUploadedSize('');
       formRef.current?.reset();
       router.refresh();
     });
@@ -77,7 +85,7 @@ export default function ReportsClient({
       {uploading && (
         <form ref={formRef} onSubmit={handleUpload} className="bg-teal-pale border border-teal/20 rounded-2xl p-5 mb-5 space-y-3">
           <p className="text-sm font-bold text-ink">{isAr ? 'إضافة وثيقة' : 'Add Document'}</p>
-          {error && <p className="text-xs text-coral">{error}</p>}
+          {error && <p className="text-xs text-coral mb-1">{error}</p>}
           <select name="type" defaultValue="progress"
             className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal/20">
             <option value="assessment">{isAr ? 'تقييم' : 'Assessment'}</option>
@@ -91,10 +99,20 @@ export default function ReportsClient({
             className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal/20" />
           <input name="name_ar" type="text" dir="rtl" placeholder="الاسم (عربي)"
             className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal/20" />
-          <input required name="file_url" type="url" placeholder={isAr ? 'رابط الملف...' : 'File URL...'}
-            className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal/20" />
-          <input name="file_size" type="text" placeholder={isAr ? 'الحجم (مثال: 1.2 MB)' : 'File size (e.g. 1.2 MB)'}
-            className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-teal/20" />
+          <FileUpload
+            childId={childId} folder="reports"
+            accept=".pdf,.doc,.docx,.xls,.xlsx,image/*"
+            label="Choose file (PDF, Word, Image)"
+            labelAr="اختر ملفاً (PDF، Word، صورة)"
+            locale={locale}
+            onUploaded={(url, size) => { setUploadedUrl(url); setUploadedSize(size ?? ''); }}
+          />
+          {uploadedUrl && (
+            <p className="text-xs text-sage flex items-center gap-1">
+              <svg width="12" height="12" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/></svg>
+              {isAr ? 'تم الرفع بنجاح' : 'File uploaded'}
+            </p>
+          )}
           <div className="flex gap-2">
             <button type="submit" disabled={isPending}
               className="flex-1 bg-teal text-white text-sm font-semibold py-2 rounded-xl disabled:opacity-60">
