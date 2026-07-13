@@ -1,10 +1,11 @@
 import { createClient } from './server';
+import { adminClient } from './admin';
 
 export async function getParentChildId(): Promise<string | null> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data: rel } = await supabase
+  const { data: rel } = await adminClient
     .from('child_relationships').select('child_id').eq('parent_id', user.id).single();
   return rel?.child_id ?? null;
 }
@@ -15,7 +16,7 @@ export async function getMyChildAsParent() {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return null;
 
-  const { data: rel } = await supabase
+  const { data: rel } = await adminClient
     .from('child_relationships')
     .select('child_id')
     .eq('parent_id', user.id)
@@ -57,8 +58,7 @@ export async function getMyChildrenAsTherapist() {
 
 /** Get therapist profile for a given child */
 export async function getChildTherapist(childId: string) {
-  const supabase = await createClient();
-  const { data: rel } = await supabase
+  const { data: rel } = await adminClient
     .from('child_relationships')
     .select('therapist_id')
     .eq('child_id', childId)
@@ -66,7 +66,7 @@ export async function getChildTherapist(childId: string) {
 
   if (!rel?.therapist_id) return null;
 
-  const { data: profile } = await supabase
+  const { data: profile } = await adminClient
     .from('profiles')
     .select('name_en, name_ar, role')
     .eq('id', rel.therapist_id)

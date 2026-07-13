@@ -1,6 +1,7 @@
 import { redirect }         from 'next/navigation';
 import { getParentChildId } from '@/lib/supabase/portal-data';
 import { createClient }     from '@/lib/supabase/server';
+import { adminClient }      from '@/lib/supabase/admin';
 
 const TYPE_MAP: Record<string, [string, string, string]> = {
   'Individual': ['Individual Therapy', 'علاج فردي',    'bg-teal-pale text-teal'],
@@ -18,7 +19,7 @@ export default async function ParentSessionsPage({ params: { locale } }: { param
 
   const [{ data: sessions }, { data: rel }] = await Promise.all([
     supabase.from('sessions').select('*').eq('child_id', childId).order('session_date', { ascending: false }),
-    supabase.from('child_relationships').select('therapist_id').eq('child_id', childId).single(),
+    adminClient.from('child_relationships').select('therapist_id').eq('child_id', childId).single(),
   ]);
 
   let therapistName = '';

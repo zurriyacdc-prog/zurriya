@@ -1,6 +1,7 @@
 import Link            from 'next/link';
 import { redirect }    from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { adminClient }  from '@/lib/supabase/admin';
 import { ProgressBar }  from '@/components/portal/ui/ProgressBar';
 import { ProgressRing } from '@/components/portal/ui/ProgressRing';
 import { AvatarDisplay } from '@/components/portal/AvatarPicker';
@@ -13,8 +14,8 @@ export default async function ParentHome({ params: { locale } }: { params: { loc
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect(`/${locale}/login`);
 
-  // Find child linked to this parent
-  const { data: rel } = await supabase
+  // Use adminClient to bypass RLS — parent users can't read child_relationships via RLS
+  const { data: rel } = await adminClient
     .from('child_relationships')
     .select('child_id, therapist_id')
     .eq('parent_id', user.id)
