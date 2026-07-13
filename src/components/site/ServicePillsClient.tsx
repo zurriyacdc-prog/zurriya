@@ -396,7 +396,7 @@ export default function ServicePillsClient({
 
   return (
     <>
-      <ul className="flex flex-wrap gap-2 rtl:flex-row-reverse">
+      <ul className={`flex flex-wrap gap-2 ${isAr ? 'justify-end' : 'justify-start'}`}>
         {items.map((item, i) => (
           <li key={item}>
             <button
