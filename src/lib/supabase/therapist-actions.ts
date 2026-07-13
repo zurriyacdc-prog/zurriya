@@ -33,7 +33,7 @@ export async function recordSession(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  notifyParent({
+  await notifyParent({
     childId,
     type: 'session',
     titleEn: 'New session recorded',
@@ -69,7 +69,7 @@ export async function addTimelineEvent(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  notifyParent({
+  await notifyParent({
     childId,
     type: 'timeline',
     titleEn: 'New milestone added',
@@ -112,7 +112,7 @@ export async function addGoal(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  notifyParent({
+  await notifyParent({
     childId,
     type: 'goal',
     titleEn: 'New goal added',
@@ -154,7 +154,7 @@ export async function toggleObjective(objectiveId: string, isDone: boolean, chil
     .single();
 
   if (isDone && obj) {
-    notifyParent({
+    await notifyParent({
       childId,
       type: 'objective',
       titleEn: 'Objective completed ✓',
@@ -212,7 +212,7 @@ export async function addReinforcer(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  notifyParent({
+  await notifyParent({
     childId,
     type: 'reinforcer',
     titleEn: 'New reinforcer added',
@@ -259,7 +259,7 @@ export async function addReport(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  notifyParent({
+  await notifyParent({
     childId,
     type: 'report',
     titleEn: 'New document uploaded',
@@ -299,7 +299,7 @@ export async function addGalleryItem(formData: FormData) {
 
   if (error) return { error: error.message };
 
-  notifyParent({
+  await notifyParent({
     childId,
     type: 'gallery',
     titleEn: mediaType === 'video' ? 'New video added to gallery' : 'New photo added to gallery',
