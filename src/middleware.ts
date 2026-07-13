@@ -13,6 +13,13 @@ const ROLE_HOME: Record<string, string> = {
 };
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Serve the /intake language picker directly — skip i18n redirect
+  if (pathname === '/intake') {
+    return NextResponse.next();
+  }
+
   // Run i18n middleware first to get locale prefix
   const intlResponse = intlMiddleware(request);
 
@@ -38,8 +45,6 @@ export async function middleware(request: NextRequest) {
 
   // Refresh session — do NOT remove this call
   const { data: { user } } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   // Strip locale prefix to get the bare path (e.g. /en/parent → /parent)
   const bare = pathname.replace(/^\/(en|ar)/, '') || '/';

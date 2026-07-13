@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createChild, archiveChild, restoreChild, deleteChildForever } from '@/lib/supabase/admin-actions';
+import Link from 'next/link';
 import AvatarPicker, { AvatarDisplay } from '@/components/portal/AvatarPicker';
 
 type Child   = { id: string; name_en: string; name_ar: string; age: number; diagnosis_en: string; diagnosis_ar: string; status: string; avatar_emoji: string | null };
@@ -158,6 +159,13 @@ export default function ChildrenClient({ locale, childList, archivedList, parent
                 {isAr ? `${child.age} سنوات · ${child.diagnosis_ar}` : `Age ${child.age} · ${child.diagnosis_en}`}
               </p>
             </div>
+            <Link href={`/${locale}/admin/children/${child.id}`}
+              title={isAr ? 'الملفات' : 'Documents'}
+              className="text-ink-2/40 hover:text-teal p-1.5 transition-colors">
+              <svg width="15" height="15" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+            </Link>
             <button onClick={() => handleArchive(child.id)} disabled={isPending}
               title={isAr ? 'أرشفة' : 'Archive'}
               className="text-ink-2/40 hover:text-coral p-1.5 transition-colors">
