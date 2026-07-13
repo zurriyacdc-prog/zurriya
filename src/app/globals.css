@@ -5,6 +5,11 @@
 @layer base {
   html { scroll-behavior: smooth; }
 
+  /* Prevent rubber-band / overscroll bounce in PWA mode */
+  html, body {
+    overscroll-behavior: none;
+  }
+
   body {
     background-color: #FAFAF5;
     color: #1A1C2E;
@@ -40,5 +45,13 @@
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* PWA / safe-area insets for notch and home-bar support */
+  .safe-area-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .safe-area-pt {
+    padding-top: env(safe-area-inset-top, 0px);
   }
 }

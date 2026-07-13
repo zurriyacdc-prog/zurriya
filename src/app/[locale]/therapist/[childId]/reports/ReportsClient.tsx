@@ -23,7 +23,12 @@ const TAB_LABELS: Record<string, [string, string]> = {
 
 function getExt(url: string | null): string {
   if (!url) return 'FILE';
-  return (url.split('.').pop() ?? 'FILE').toUpperCase().slice(0, 4);
+  return (url.split('.').pop()?.split('?')[0] ?? 'FILE').toUpperCase().slice(0, 4);
+}
+
+function makeDownloadUrl(fileUrl: string, name: string): string {
+  const ext = fileUrl.split('.').pop()?.split('?')[0]?.toLowerCase() ?? 'pdf';
+  return `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent(`${name}.${ext}`)}`;
 }
 
 export default function ReportsClient({
@@ -158,8 +163,11 @@ export default function ReportsClient({
             </div>
             <div className="flex items-center gap-2">
               {r.file_url && (
-                <a href={r.file_url} target="_blank" rel="noopener noreferrer"
-                  className="w-8 h-8 rounded-lg bg-paper border border-border flex items-center justify-center text-ink-2/60 hover:text-teal transition-colors">
+                <a
+                  href={makeDownloadUrl(r.file_url, isAr ? r.name_ar : r.name_en)}
+                  className="w-8 h-8 rounded-lg bg-paper border border-border flex items-center justify-center text-ink-2/60 hover:text-teal transition-colors"
+                  title={isAr ? 'تنزيل' : 'Download'}
+                >
                   <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                   </svg>

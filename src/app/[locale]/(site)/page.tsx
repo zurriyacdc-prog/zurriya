@@ -6,6 +6,7 @@ import { ContactForm } from '@/components/ContactForm';
 import { TeamAvatar } from '@/components/TeamAvatar';
 import { assessmentItems, interventionItems, partnershipItems } from '@/content/services';
 import { teamMembers } from '@/content/team';
+import ServicePillsClient from '@/components/site/ServicePillsClient';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -108,12 +109,6 @@ export default async function HomePage() {
       tag:     isAr ? '٠٣' : '03',
     },
   ] as const;
-
-  const pillClass: Record<string, string> = {
-    teal:  'bg-teal-pale border-teal/20 text-teal-dark hover:bg-teal/10',
-    coral: 'bg-coral-pale border-coral/20 text-coral-dark hover:bg-coral/10',
-    sage:  'bg-sage-pale  border-sage/20  text-sage-dark  hover:bg-sage/10',
-  };
 
   // ── values ──
   const values = [
@@ -309,17 +304,12 @@ export default async function HomePage() {
                 </div>
 
                 <div className="flex-1 px-7 py-6">
-                  <ul className={`flex flex-wrap gap-2 rtl:flex-row-reverse`}>
-                    {card.items.map((item) => (
-                      <li
-                        key={item}
-                        className={`inline-flex items-center gap-1.5 border rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${pillClass[card.accent]}`}
-                      >
-                        <span className="w-1 h-1 rounded-full bg-current opacity-60 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
+                  <ServicePillsClient
+                    items={card.items}
+                    cardId={card.id}
+                    accent={card.accent}
+                    locale={locale}
+                  />
                 </div>
 
                 <div className="px-7 pb-7">
@@ -329,6 +319,152 @@ export default async function HomePage() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════════════════════════════════════════
+          PORTAL — family app marketing
+      ════════════════════════════════════════════════════════ */}
+      <section id="portal" className="relative overflow-hidden bg-teal-dark px-6 py-14 md:py-20 lg:py-28">
+        {/* Decorative radial glow */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at 75% 40%, rgba(74,158,173,0.25) 0%, transparent 65%)' }}
+          aria-hidden="true"
+        />
+
+        <div className="relative max-w-content mx-auto">
+          {/* Section header */}
+          <div className={`mb-14 rtl:text-right`}>
+            <div className={`inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-5`}>
+              <span className="text-base">📱</span>
+              <span className="text-xs font-semibold text-white/80 tracking-wide">
+                {isAr ? 'بوابة زرية العائلية' : 'Zurriya Family Portal'}
+              </span>
+            </div>
+            <h2 className="font-heading text-3xl md:text-4xl lg:text-5xl text-white leading-tight max-w-2xl">
+              {isAr
+                ? 'رحلة طفلك... بين يديك'
+                : 'Your child\'s journey, in your hands.'}
+            </h2>
+            <p className="mt-4 text-white/60 text-base md:text-lg max-w-xl leading-relaxed">
+              {isAr
+                ? 'بوابة زرية العائلية تضعك في قلب رحلة علاج طفلك — وصول فوري إلى تقدمه وجلساته وخططه، في مكان واحد.'
+                : 'The Zurriya Family Portal puts you at the center of your child\'s therapy — real-time access to progress, sessions, plans, and every milestone.'}
+            </p>
+          </div>
+
+          <div className={`grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-start rtl:text-right`}>
+            {/* Left: feature grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {[
+                {
+                  icon: '📊',
+                  en: { title: 'Live Progress Tracking', body: 'Goals, milestones, and progress — updated after every session so you\'re never out of the loop.' },
+                  ar: { title: 'متابعة التقدم لحظة بلحظة', body: 'أهداف ومراحل وتقدم — يُحدَّث بعد كل جلسة حتى لا يفوتك شيء.' },
+                },
+                {
+                  icon: '📅',
+                  en: { title: 'Full Session History', body: 'What was covered, therapist notes, and engagement ratings — a complete log you can revisit anytime.' },
+                  ar: { title: 'سجل الجلسات الكامل', body: 'ما تناولته كل جلسة وملاحظات المعالج — سجل متكامل يمكنك الرجوع إليه في أي وقت.' },
+                },
+                {
+                  icon: '🎯',
+                  en: { title: 'Personalized Goal Plans', body: 'Know exactly what your child is working on and why — written for families, not just clinicians.' },
+                  ar: { title: 'خطط الأهداف المخصصة', body: 'اعرف بالضبط ما يعمل عليه طفلك ولماذا — مكتوبة للأسر وليس فقط للمتخصصين.' },
+                },
+                {
+                  icon: '🖼️',
+                  en: { title: 'Memory Gallery', body: 'Photos and moments from your child\'s sessions, shared directly with you by the therapy team.' },
+                  ar: { title: 'معرض الذكريات', body: 'صور ولحظات من جلسات طفلك، تُشارَك معك مباشرةً من الفريق العلاجي.' },
+                },
+                {
+                  icon: '🌟',
+                  en: { title: 'Reinforcers List', body: 'A personalized list of what motivates your child most — kept updated so home strategies stay aligned.' },
+                  ar: { title: 'قائمة المعززات', body: 'قائمة مخصصة بما يُحفّز طفلك أكثر ما يكون — تُحدَّث باستمرار لتنسيق الاستراتيجيات المنزلية.' },
+                },
+                {
+                  icon: '📄',
+                  en: { title: 'All Documents, One Place', body: 'Assessments, reports, plans — all stored securely in the app. No more folders, no more lost papers.' },
+                  ar: { title: 'كل الوثائق في مكان واحد', body: 'تقييمات وتقارير وخطط — محفوظة بأمان في التطبيق. لا مزيد من الملفات المتناثرة.' },
+                },
+                {
+                  icon: '🗓️',
+                  en: { title: 'Journey Timeline', body: 'A visual log of every milestone and achievement — watch your child\'s story unfold over time.' },
+                  ar: { title: 'جدول رحلة الطفل', body: 'سجل مرئي لكل مرحلة وإنجاز — شاهد قصة تطور طفلك تتكشّف بمرور الوقت.' },
+                },
+                {
+                  icon: '💬',
+                  en: { title: 'Arabic & English', body: 'Fully bilingual — switch between Arabic and English anytime with a single tap.' },
+                  ar: { title: 'عربي وإنجليزي', body: 'ثنائي اللغة بالكامل — انتقل بين العربية والإنجليزية في أي وقت بنقرة واحدة.' },
+                },
+              ].map((f) => (
+                <div
+                  key={f.en.title}
+                  className="bg-white/8 border border-white/12 rounded-2xl p-5 hover:bg-white/12 transition-colors"
+                >
+                  <span className="text-2xl block mb-3">{f.icon}</span>
+                  <p className="text-white font-semibold text-sm mb-1.5 leading-snug">
+                    {isAr ? f.ar.title : f.en.title}
+                  </p>
+                  <p className="text-white/50 text-xs leading-relaxed">
+                    {isAr ? f.ar.body : f.en.body}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Right: story + PWA callout */}
+            <div className="flex flex-col gap-8 lg:sticky lg:top-24">
+              {/* Origin story */}
+              <div className="bg-white/8 border border-white/12 rounded-3xl p-7">
+                <div className="w-10 h-10 rounded-2xl bg-coral/20 flex items-center justify-center mb-5">
+                  <span className="text-xl">💡</span>
+                </div>
+                <p className="font-heading text-lg text-white leading-snug mb-4">
+                  {isAr ? 'لماذا بنينا البوابة؟' : 'Why we built this'}
+                </p>
+                <p className="text-white/60 text-sm leading-relaxed mb-3">
+                  {isAr
+                    ? 'رأينا والدين يصلون حاملين ملفات متناثرة، يتساءلون عمّا حدث في جلسة الأسبوع الماضي، غير متأكدين من كيفية المساعدة في المنزل.'
+                    : 'We\'ve sat with too many parents arriving with folders of loose papers, wondering what happened last session, unsure how to support their child at home.'}
+                </p>
+                <p className="text-white/60 text-sm leading-relaxed">
+                  {isAr
+                    ? 'العلاج لا ينتهي عند باب العيادة. أنت شريك في هذه الرحلة — والبوابة هي جسر التواصل بينكم.'
+                    : 'Therapy doesn\'t end at the clinic door. You\'re a partner in this journey — and the portal is the bridge that keeps you connected.'}
+                </p>
+              </div>
+
+              {/* PWA install callout */}
+              <div className="bg-coral/15 border border-coral/25 rounded-3xl p-7">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-2xl bg-coral/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-xl">⬇️</span>
+                  </div>
+                  <p className="font-semibold text-white text-sm">
+                    {isAr ? 'يعمل مثل تطبيق أصيل' : 'Works like a native app'}
+                  </p>
+                </div>
+                <p className="text-white/60 text-xs leading-relaxed mb-4">
+                  {isAr
+                    ? 'لا تحتاج إلى متجر التطبيقات. اضغط على زر المشاركة في متصفحك ثم "أضف إلى الشاشة الرئيسية" — يُنصَّب فورًا كتطبيق مستقل، متاح بالعربية والإنجليزية.'
+                    : 'No App Store needed. Tap your browser\'s share button and \'Add to Home Screen\' — it installs instantly as a standalone app, available in Arabic and English.'}
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {[
+                    isAr ? 'يعمل بدون إنترنت جزئيًا' : 'Works offline (partial)',
+                    isAr ? 'شاشة كاملة بدون متصفح' : 'Full-screen, no browser bar',
+                    isAr ? 'آمن ومشفّر' : 'Secure & private',
+                  ].map((tag) => (
+                    <span key={tag} className="text-[11px] text-white/60 bg-white/10 rounded-full px-2.5 py-1">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>

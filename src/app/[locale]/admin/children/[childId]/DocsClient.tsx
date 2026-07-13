@@ -21,6 +21,11 @@ const TYPE_OPTS = [
   ['other',      'Other',      'أخرى'],
 ] as const;
 
+function makeDownloadUrl(fileUrl: string, name: string): string {
+  const ext = fileUrl.split('.').pop()?.split('?')[0]?.toLowerCase() ?? 'pdf';
+  return `/api/download?url=${encodeURIComponent(fileUrl)}&filename=${encodeURIComponent(`${name}.${ext}`)}`;
+}
+
 export default function DocsClient({
   reports, locale, childId, childName,
 }: { reports: Report[]; locale: string; childId: string; childName: string }) {
@@ -140,9 +145,11 @@ export default function DocsClient({
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
                 {r.file_url && (
-                  <a href={r.file_url} target="_blank" rel="noopener noreferrer"
-                    className="text-xs font-semibold text-teal hover:text-teal-dark px-2.5 py-1.5 rounded-lg hover:bg-teal-pale transition-colors">
-                    {isAr ? 'فتح' : 'Open'}
+                  <a
+                    href={makeDownloadUrl(r.file_url, isAr ? (r.title_ar || r.title_en || 'document') : (r.title_en || r.title_ar || 'document'))}
+                    className="text-xs font-semibold text-teal hover:text-teal-dark px-2.5 py-1.5 rounded-lg hover:bg-teal-pale transition-colors"
+                  >
+                    {isAr ? 'تنزيل' : 'Download'}
                   </a>
                 )}
                 <button onClick={() => handleDelete(r.id)} disabled={isPending}

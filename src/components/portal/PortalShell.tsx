@@ -178,7 +178,7 @@ export function PortalShell({
       {/* ── Main content area ─────────────────────────────────── */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Mobile top bar */}
-        <header className={`${headerBg} md:hidden flex items-center gap-3 px-4 py-3 flex-shrink-0`}>
+        <header className={`${headerBg} md:hidden flex items-center gap-3 px-4 py-3 flex-shrink-0 safe-area-pt`}>
           <button
             onClick={() => setSidebarOpen(true)}
             className="text-white/70 hover:text-white transition-colors"
@@ -198,7 +198,7 @@ export function PortalShell({
         </header>
 
         {/* Scrollable content */}
-        <main className="flex-1 overflow-y-auto">
+        <main className="flex-1 overflow-y-auto overscroll-y-contain" style={{ WebkitOverflowScrolling: 'touch' } as never}>
           {children}
         </main>
 
