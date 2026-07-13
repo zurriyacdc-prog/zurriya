@@ -2,7 +2,10 @@
 
 import { useState, useTransition, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { addGoal, addObjective, toggleObjective, updateGoalProgress } from '@/lib/supabase/therapist-actions';
+import {
+  addGoal, addObjective, toggleObjective, updateGoalProgress,
+  deleteGoal, deleteObjective, editGoal,
+} from '@/lib/supabase/therapist-actions';
 import { ProgressBar } from '@/components/portal/ui/ProgressBar';
 
 type Objective = { id: string; text_en: string; text_ar: string; is_done: boolean };
@@ -24,12 +27,14 @@ export default function PlanClient({
   const router  = useRouter();
   const goalFormRef = useRef<HTMLFormElement>(null);
   const objFormRef  = useRef<Record<string, HTMLFormElement | null>>({});
+  const editFormRef = useRef<Record<string, HTMLFormElement | null>>({});
 
-  const [tab, setTab]                = useState<'long' | 'short'>('long');
-  const [addingGoal, setAddingGoal]  = useState(false);
+  const [tab, setTab]                   = useState<'long' | 'short'>('long');
+  const [addingGoal, setAddingGoal]     = useState(false);
   const [addingObjFor, setAddingObjFor] = useState<string | null>(null);
-  const [error, setError]            = useState('');
-  const [isPending, startTransition] = useTransition();
+  const [editingGoal, setEditingGoal]   = useState<string | null>(null);
+  const [error, setError]               = useState('');
+  const [isPending, startTransition]    = useTransition();
 
   const filtered = goals.filter((g) => g.type === (tab === 'long' ? 'long_term' : 'short_term'));
 
@@ -43,6 +48,26 @@ export default function PlanClient({
       const result = await addGoal(fd);
       if (result?.error) { setError(result.error); return; }
       setAddingGoal(false);
+      router.refresh();
+    });
+  }
+
+  function handleEditGoal(goalId: string, e: React.FormEvent) {
+    e.preventDefault();
+    const form = editFormRef.current[goalId];
+    if (!form) return;
+    const fd = new FormData(form);
+    startTransition(async () => {
+      await editGoal(goalId, fd, childId);
+      setEditingGoal(null);
+      router.refresh();
+    });
+  }
+
+  function handleDeleteGoal(goalId: string) {
+    if (!confirm(isAr ? 'هل أنت متأكد من حذف هذا الهدف وجميع أهدافه الفرعية؟' : 'Delete this goal and all its objectives?')) return;
+    startTransition(async () => {
+      await deleteGoal(goalId, childId);
       router.refresh();
     });
   }
@@ -64,6 +89,13 @@ export default function PlanClient({
   function handleToggleObjective(objId: string, isDone: boolean) {
     startTransition(async () => {
       await toggleObjective(objId, isDone, childId);
+      router.refresh();
+    });
+  }
+
+  function handleDeleteObjective(objId: string) {
+    startTransition(async () => {
+      await deleteObjective(objId, childId);
       router.refresh();
     });
   }
@@ -141,8 +173,10 @@ export default function PlanClient({
         {filtered.map((goal) => {
           const colorBg = DOMAIN_COLORS[goal.domain ?? ''] ?? 'bg-paper';
           const doneCount = goal.objectives.filter((o) => o.is_done).length;
+          const isEditing = editingGoal === goal.id;
           return (
             <div key={goal.id} className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+              {/* Goal header */}
               <div className={`${colorBg} px-5 py-4 flex items-start gap-3`}>
                 <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 shadow-sm"
                   style={{ backgroundColor: goal.color ? `${goal.color}22` : '#1B5E6E22' }}>
@@ -152,11 +186,63 @@ export default function PlanClient({
                   <h3 className="font-semibold text-sm text-ink">{isAr ? goal.title_ar : goal.title_en}</h3>
                   {goal.domain && <p className="text-xs text-ink-2 mt-0.5 capitalize">{goal.domain}</p>}
                 </div>
+                {/* Edit + Delete goal */}
+                <div className="flex items-center gap-1 flex-shrink-0">
+                  <button
+                    onClick={() => setEditingGoal(isEditing ? null : goal.id)}
+                    disabled={isPending}
+                    title={isAr ? 'تعديل' : 'Edit'}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-2/50 hover:text-teal hover:bg-white/60 transition-colors">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => handleDeleteGoal(goal.id)}
+                    disabled={isPending}
+                    title={isAr ? 'حذف الهدف' : 'Delete goal'}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center text-ink-2/50 hover:text-coral hover:bg-white/60 transition-colors">
+                    <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
 
+              {/* Inline edit form */}
+              {isEditing && (
+                <form
+                  ref={(el) => { editFormRef.current[goal.id] = el; }}
+                  onSubmit={(e) => handleEditGoal(goal.id, e)}
+                  className="px-5 py-4 bg-teal-pale/50 border-b border-teal/20 space-y-2">
+                  <input name="title_en" defaultValue={goal.title_en} required
+                    placeholder="Goal title (English)"
+                    className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal/20" />
+                  <input name="title_ar" defaultValue={goal.title_ar} dir="rtl"
+                    placeholder="عنوان الهدف (عربي)"
+                    className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal/20" />
+                  <select name="domain" defaultValue={goal.domain ?? ''}
+                    className="w-full text-sm bg-white border border-border rounded-xl px-3 py-2 focus:outline-none focus:ring-2 focus:ring-teal/20">
+                    <option value="">{isAr ? 'المجال (اختياري)' : 'Domain (optional)'}</option>
+                    {DOMAINS.map((d) => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                  <div className="flex gap-2">
+                    <button type="submit" disabled={isPending}
+                      className="flex-1 bg-teal text-white text-xs font-semibold py-2 rounded-xl disabled:opacity-60">
+                      {isPending ? '...' : (isAr ? 'حفظ التعديل' : 'Save changes')}
+                    </button>
+                    <button type="button" onClick={() => setEditingGoal(null)}
+                      className="px-3 py-2 text-xs text-ink-2 bg-white border border-border rounded-xl">
+                      {isAr ? 'إلغاء' : 'Cancel'}
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Progress */}
               <div className="px-5 py-4 border-b border-border/60">
                 <div className="flex justify-between mb-2">
-                  <span className="text-xs text-ink-2">{isAr ? 'التقدم' : 'Progress'} {goal.progress}%</span>
+                  <span className="text-xs text-ink-2">{isAr ? 'التقدم' : 'Progress'}</span>
                   <span className="text-xs font-bold text-teal">{goal.progress}%</span>
                 </div>
                 <ProgressBar pct={goal.progress} />
@@ -168,6 +254,7 @@ export default function PlanClient({
                 </div>
               </div>
 
+              {/* Objectives */}
               <div className="px-5 py-4">
                 <div className="flex items-center justify-between mb-3">
                   <p className="text-[11px] font-bold text-ink-2/50 tracking-wider uppercase">
@@ -196,7 +283,7 @@ export default function PlanClient({
 
                 <ul className="space-y-2.5">
                   {goal.objectives.map((obj) => (
-                    <li key={obj.id} className="flex items-start gap-3">
+                    <li key={obj.id} className="flex items-start gap-2 group">
                       <button
                         onClick={() => handleToggleObjective(obj.id, !obj.is_done)}
                         disabled={isPending}
@@ -212,6 +299,15 @@ export default function PlanClient({
                       <span className={`text-xs leading-relaxed flex-1 ${obj.is_done ? 'text-ink-2 line-through opacity-60' : 'text-ink-2'}`}>
                         {isAr ? obj.text_ar : obj.text_en}
                       </span>
+                      <button
+                        onClick={() => handleDeleteObjective(obj.id)}
+                        disabled={isPending}
+                        title={isAr ? 'حذف' : 'Delete'}
+                        className="opacity-0 group-hover:opacity-100 w-5 h-5 flex-shrink-0 flex items-center justify-center text-ink-2/30 hover:text-coral transition-all mt-0.5">
+                        <svg width="11" height="11" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                      </button>
                     </li>
                   ))}
                 </ul>

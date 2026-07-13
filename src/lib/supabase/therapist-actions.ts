@@ -111,6 +111,29 @@ export async function toggleObjective(objectiveId: string, isDone: boolean, chil
   revalidatePath(`/[locale]/parent/plan`);
 }
 
+export async function deleteObjective(objectiveId: string, childId: string) {
+  await adminClient.from('objectives').delete().eq('id', objectiveId);
+  revalidatePath(`/[locale]/therapist/${childId}/plan`);
+  revalidatePath(`/[locale]/parent/plan`);
+}
+
+export async function deleteGoal(goalId: string, childId: string) {
+  await adminClient.from('objectives').delete().eq('goal_id', goalId);
+  await adminClient.from('goals').delete().eq('id', goalId);
+  revalidatePath(`/[locale]/therapist/${childId}/plan`);
+  revalidatePath(`/[locale]/parent/plan`);
+}
+
+export async function editGoal(goalId: string, formData: FormData, childId: string) {
+  await adminClient.from('goals').update({
+    title_en: formData.get('title_en') as string,
+    title_ar: formData.get('title_ar') as string || formData.get('title_en') as string,
+    domain:   formData.get('domain') as string || null,
+  }).eq('id', goalId);
+  revalidatePath(`/[locale]/therapist/${childId}/plan`);
+  revalidatePath(`/[locale]/parent/plan`);
+}
+
 // ── Reinforcers ──────────────────────────────────────────────────────────────
 export async function addReinforcer(formData: FormData) {
   const user = await getUser();
