@@ -81,7 +81,7 @@ export default async function ParentHome({ params: { locale } }: { params: { loc
         <div className="bg-teal h-16" />
         <div className="px-6 pb-6">
           <div className="flex items-end justify-between -mt-8 mb-4">
-            <div className="rounded-2xl border-4 border-white shadow-sm">
+            <div className="rounded-full border-4 border-white shadow-sm overflow-hidden">
               <AvatarDisplay avatar={child.avatar_emoji || '👦'} size="lg" />
             </div>
             <span className="text-[11px] font-semibold text-ink-2/60 bg-paper px-2 py-1 rounded-lg border border-border font-mono">
