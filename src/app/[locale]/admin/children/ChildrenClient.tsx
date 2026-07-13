@@ -3,8 +3,9 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { createChild, archiveChild, restoreChild, deleteChildForever } from '@/lib/supabase/admin-actions';
+import AvatarPicker, { AvatarDisplay } from '@/components/portal/AvatarPicker';
 
-type Child   = { id: string; name_en: string; name_ar: string; age: number; diagnosis_en: string; diagnosis_ar: string; status: string };
+type Child   = { id: string; name_en: string; name_ar: string; age: number; diagnosis_en: string; diagnosis_ar: string; status: string; avatar_emoji: string | null };
 type Profile = { id: string; name_en: string; name_ar: string; role: string };
 
 export default function ChildrenClient({ locale, childList, archivedList, parents, therapists }: {
@@ -145,7 +146,7 @@ export default function ChildrenClient({ locale, childList, archivedList, parent
       <div className="space-y-3">
         {filtered.length ? filtered.map((child) => (
           <div key={child.id} className="bg-white rounded-2xl border border-border shadow-sm px-5 py-4 flex items-center gap-4">
-            <div className="w-10 h-10 rounded-full bg-teal-pale flex items-center justify-center flex-shrink-0 text-lg">👦</div>
+            <AvatarPicker childId={child.id} currentAvatar={child.avatar_emoji || '👦'} locale={locale} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-0.5">
                 <p className="text-sm font-semibold text-ink">{isAr ? child.name_ar : child.name_en}</p>
@@ -184,7 +185,7 @@ export default function ChildrenClient({ locale, childList, archivedList, parent
           </div>
           {archivedList.map((child) => (
             <div key={child.id} className="bg-paper rounded-2xl border border-border/60 px-5 py-4 flex items-center gap-4 opacity-70">
-              <div className="w-10 h-10 rounded-full bg-ink/10 flex items-center justify-center flex-shrink-0 text-lg grayscale">👦</div>
+              <div className="grayscale opacity-60"><AvatarDisplay avatar={child.avatar_emoji || '👦'} size="md" /></div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
                   <p className="text-sm font-semibold text-ink-2">{isAr ? child.name_ar : child.name_en}</p>

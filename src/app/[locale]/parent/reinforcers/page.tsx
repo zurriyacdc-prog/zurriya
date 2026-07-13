@@ -23,7 +23,7 @@ export default async function ParentReinforcersPage({ params: { locale } }: { pa
           {isAr ? 'ما يحبه طفلك ويحفزه' : "What motivates and delights your child"}
         </p>
       </div>
-      <ReinforcersClient reinforcers={reinforcers ?? []} locale={locale} />
+      <ReinforcersClient reinforcers={reinforcers ?? []} locale={locale} childId={childId} />
     </div>
   );
 }

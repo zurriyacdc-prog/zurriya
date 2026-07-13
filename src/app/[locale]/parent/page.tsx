@@ -47,9 +47,9 @@ export default async function ParentHome({ params: { locale } }: { params: { loc
   // Fetch child + therapist + counts in parallel
   const [{ data: child }, therapistResult, { count: goalCount }, { count: sessionCount }, { count: reportCount }] =
     await Promise.all([
-      supabase.from('children').select('*').eq('id', rel.child_id).single(),
+      adminClient.from('children').select('*').eq('id', rel.child_id).single(),
       rel.therapist_id
-        ? supabase.from('profiles').select('name_en, name_ar').eq('id', rel.therapist_id).single()
+        ? adminClient.from('profiles').select('name_en, name_ar').eq('id', rel.therapist_id).single()
         : Promise.resolve({ data: null, error: null }),
       supabase.from('goals').select('*', { count: 'exact', head: true }).eq('child_id', rel.child_id).eq('is_active', true),
       supabase.from('sessions').select('*', { count: 'exact', head: true }).eq('child_id', rel.child_id),
