@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage({ params: { locale } }: { params: { locale: string } }) {
@@ -45,13 +44,8 @@ export default function LoginPage({ params: { locale } }: { params: { locale: st
   };
 
   return (
-    <div className="min-h-screen bg-paper flex flex-col items-center justify-center px-4">
+    <div className="min-h-dvh bg-paper flex items-center justify-center px-4 py-8">
       <div className="w-full max-w-sm">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <Image src="/logo/logo.png" alt="Zurriya" width={120} height={48} className="object-contain" />
-        </div>
-
         <div className="bg-white rounded-3xl shadow-lg border border-border px-8 py-8 space-y-5">
           <div className="text-center space-y-1">
             <h1 className="text-xl font-bold text-ink">

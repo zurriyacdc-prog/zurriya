@@ -1025,12 +1025,12 @@ export function IntakeForm({ locale }: { locale: string }) {
             <span className="text-3xl flex-shrink-0">💚</span>
             <div>
               <p className="font-semibold text-teal-dark text-sm leading-snug">
-                {isAr ? 'أنتم في المنتصف — أحسنتم!' : "You're halfway there — great work!"}
+                {isAr ? 'لقد قطعتم شوطًا رائعًا، وبقي القليل.' : "You've come a long way — just a little more to go."}
               </p>
               <p className="text-xs text-ink-2 mt-1 leading-relaxed">
                 {isAr
-                  ? 'كل إجابة تكتبونها تقربنا من فهم أعمق لطفلكم. إقدامكم على هذه الخطوة يصنع فرقاً حقيقياً.'
-                  : 'Every answer brings us closer to a deeper understanding of your child. The effort you\'re putting in makes a real difference.'}
+                  ? 'لكل طفل طريقته الخاصة في النمو، وإجاباتكم تساعدنا على التعرّف على طفلكم كما هو، لنقدم له الدعم الذي يناسب احتياجاته.'
+                  : "Every child grows in their own unique way, and your responses are helping us get to know your child better so we can provide the support that best fits their needs."}
               </p>
             </div>
           </div>

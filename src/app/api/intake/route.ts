@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
+import { buildIntakePdf } from '@/lib/intake-pdf';
 
 const transporter = nodemailer.createTransport({
   service: 'gmail',
@@ -674,17 +675,26 @@ ${sec('14. Consent / الموافقة', [row("Confidentiality 1",d.consent_conf1
 </body></html>`;
 
     const printDoc = buildPrintDoc(d);
+    const pdfFilename = `Zurriya-Intake-${safeChild}-${new Date().toISOString().split('T')[0]}.pdf`;
+    const pdfBuffer = await buildIntakePdf(d as Record<string, unknown>);
 
     await transporter.sendMail({
       from: `"Zurriya Intake Form" <${process.env.GMAIL_USER}>`,
       to: 'zurriyacdc@gmail.com',
       subject: `📋 Intake Form — ${childName} — ${dateStr}`,
       html: emailHtml,
-      attachments: [{
-        filename,
-        content: Buffer.from(printDoc, 'utf8'),
-        contentType: 'text/html; charset=utf-8',
-      }],
+      attachments: [
+        {
+          filename,
+          content: Buffer.from(printDoc, 'utf8'),
+          contentType: 'text/html; charset=utf-8',
+        },
+        {
+          filename: pdfFilename,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+        },
+      ],
     });
 
     return NextResponse.json({ success: true });

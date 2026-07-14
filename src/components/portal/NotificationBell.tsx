@@ -89,7 +89,7 @@ export default function NotificationBell({
             className={`fixed inset-y-0 ${isAr ? 'left-0' : 'right-0'} w-full max-w-sm bg-white z-50 flex flex-col shadow-2xl`}
           >
             {/* Header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-white flex-shrink-0">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-white flex-shrink-0 safe-area-pt">
               <div className="flex items-center gap-2">
                 <h2 className="font-bold text-sm text-ink">
                   {isAr ? 'الإشعارات' : 'Notifications'}
@@ -109,7 +109,7 @@ export default function NotificationBell({
             </div>
 
             {/* List */}
-            <div className={`flex-1 overflow-y-auto divide-y divide-border ${isAr ? 'text-right' : ''}`}>
+            <div className={`flex-1 overflow-y-auto divide-y divide-border safe-area-pb ${isAr ? 'text-right' : ''}`}>
               {notifs.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center px-6">
                   <span className="text-4xl mb-3">🔔</span>
