@@ -5,8 +5,8 @@ export default function TherapistMorePage({ params: { locale } }: { params: { lo
   const base  = `/${locale}/therapist`;
 
   const links = [
-    { href: `/${locale}/parent`,     labelEn: 'Parent Portal Preview', labelAr: 'معاينة بوابة الأسرة', icon: '👁️' },
-    { href: `${base}`,              labelEn: 'My Children',        labelAr: 'أطفالي',            icon: '👦' },
+    { href: `/${locale}/parent`, labelEn: 'Parent Portal Preview', labelAr: 'معاينة بوابة الأسرة', icon: '👁️' },
+    { href: `${base}/settings`,  labelEn: 'Settings',              labelAr: 'الإعدادات',           icon: '⚙️' },
   ];
 
   return (
