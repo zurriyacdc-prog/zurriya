@@ -31,7 +31,6 @@ export default function LoginPage({ params: { locale } }: { params: { locale: st
       return;
     }
 
-    // Fetch role and redirect
     const { data: profile } = await supabase
       .from('profiles')
       .select('role')
