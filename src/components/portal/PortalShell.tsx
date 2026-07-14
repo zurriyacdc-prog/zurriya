@@ -60,7 +60,7 @@ export function PortalShell({
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo + portal name */}
-      <div className={`${headerBg} px-5 py-5 flex items-center gap-3`}>
+      <div className={`${headerBg} px-5 pb-5 flex items-center gap-3 safe-area-pt`}>
         <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0 overflow-hidden">
           <Image src="/logo/logo.png" alt="Zurriya" width={40} height={40} className="object-contain" />
         </div>
