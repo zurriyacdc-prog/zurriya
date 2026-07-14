@@ -4,6 +4,27 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
+function MsgContent({ text, isUser }: { text: string; isUser: boolean }) {
+  const MD_LINK = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+  const parts: React.ReactNode[] = [];
+  let cursor = 0;
+  let m: RegExpExecArray | null;
+  MD_LINK.lastIndex = 0;
+  while ((m = MD_LINK.exec(text)) !== null) {
+    if (m.index > cursor) parts.push(<span key={cursor}>{text.slice(cursor, m.index)}</span>);
+    const isWA = m[2]!.includes('wa.me');
+    parts.push(
+      <a key={m.index} href={m[2]} target="_blank" rel="noopener noreferrer"
+        className={`underline font-semibold ${isUser ? 'text-white/90' : isWA ? 'text-[#25D366]' : 'text-teal'}`}>
+        {m[1]}
+      </a>
+    );
+    cursor = m.index + m[0].length;
+  }
+  if (cursor < text.length) parts.push(<span key={cursor}>{text.slice(cursor)}</span>);
+  return <span style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{parts}</span>;
+}
+
 const SUGGESTED: Record<string, string[]> = {
   ar: [
     'ما هي الخدمات التي تقدمها ذرية؟',
@@ -149,13 +170,13 @@ export function ChatWidget({ locale }: { locale: string }) {
                   </div>
                 )}
                 <div
-                  className={`max-w-[82%] px-3.5 py-2.5 text-sm leading-relaxed whitespace-pre-wrap break-words ${
+                  className={`max-w-[82%] px-3.5 py-2.5 text-sm leading-relaxed ${
                     m.role === 'user'
                       ? 'bg-teal text-white rounded-2xl rounded-ee-[4px]'
                       : 'bg-white text-ink rounded-2xl rounded-es-[4px] shadow-sm border border-border/40'
                   }`}
                 >
-                  {m.content}
+                  <MsgContent text={m.content} isUser={m.role === 'user'} />
                 </div>
               </div>
             ))}
