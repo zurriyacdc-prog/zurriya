@@ -1,6 +1,5 @@
 import path from 'path';
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
 const PDFDocument = require('pdfkit') as typeof import('pdfkit');
 
 const TEAL  = '#1B5E6E';
