@@ -156,7 +156,7 @@ export function PortalShell({
   );
 
   return (
-    <div className="flex h-screen overflow-hidden bg-paper">
+    <div className="flex h-dvh overflow-hidden bg-paper">
       {/* ── Desktop sidebar ──────────────────────────────────── */}
       <aside
         className={`hidden md:flex flex-col w-60 flex-shrink-0 bg-white border-e border-border z-20`}
