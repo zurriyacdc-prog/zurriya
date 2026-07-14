@@ -47,6 +47,12 @@ export async function recordSession(formData: FormData) {
   return { success: true };
 }
 
+export async function deleteSession(sessionId: string, childId: string) {
+  await adminClient.from('sessions').delete().eq('id', sessionId);
+  revalidatePath(`/[locale]/therapist/${childId}/sessions`);
+  revalidatePath(`/[locale]/parent/sessions`);
+}
+
 // ── Timeline events ───────────────────────────────────────────────────────────
 export async function addTimelineEvent(formData: FormData) {
   const user = await getUser();

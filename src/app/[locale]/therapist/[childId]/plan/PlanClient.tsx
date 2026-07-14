@@ -86,9 +86,13 @@ export default function PlanClient({
     });
   }
 
-  function handleToggleObjective(objId: string, isDone: boolean) {
+  function handleToggleObjective(goalId: string, objId: string, isDone: boolean, allObjectives: Objective[]) {
+    // Auto-compute progress: count how many will be done after this toggle
+    const newDone = allObjectives.filter((o) => (o.id === objId ? isDone : o.is_done)).length;
+    const newProgress = allObjectives.length > 0 ? Math.round((newDone / allObjectives.length) * 100) : 0;
     startTransition(async () => {
       await toggleObjective(objId, isDone, childId);
+      await updateGoalProgress(goalId, newProgress, childId);
       router.refresh();
     });
   }
@@ -285,7 +289,7 @@ export default function PlanClient({
                   {goal.objectives.map((obj) => (
                     <li key={obj.id} className="flex items-start gap-2 group">
                       <button
-                        onClick={() => handleToggleObjective(obj.id, !obj.is_done)}
+                        onClick={() => handleToggleObjective(goal.id, obj.id, !obj.is_done, goal.objectives)}
                         disabled={isPending}
                         className={`w-5 h-5 rounded-full flex-shrink-0 flex items-center justify-center mt-0.5 transition-colors ${
                           obj.is_done ? 'bg-sage text-white' : 'border-2 border-border hover:border-teal'
