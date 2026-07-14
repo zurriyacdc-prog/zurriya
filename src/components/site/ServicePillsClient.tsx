@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 
 type Exp = {
   en: { title: string; body: string; forLabel: string };
@@ -376,6 +377,15 @@ const EXPS: Record<string, Exp[]> = {
   ],
 };
 
+// Small expand icon shown on every pill
+function ExpandIcon() {
+  return (
+    <svg width="9" height="9" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className="opacity-50 flex-shrink-0">
+      <path d="M1 5h8M6 2l3 3-3 3"/>
+    </svg>
+  );
+}
+
 export default function ServicePillsClient({
   items,
   cardId,
@@ -387,88 +397,122 @@ export default function ServicePillsClient({
   accent: string;
   locale: string;
 }) {
-  const isAr = locale === 'ar';
-  const exps = EXPS[cardId] ?? [];
+  const isAr    = locale === 'ar';
+  const exps    = EXPS[cardId] ?? [];
   const [selected, setSelected] = useState<Exp | null>(null);
+  const [mounted,  setMounted]  = useState(false);
 
-  const pillCls = PILL_CLASS[accent] ?? PILL_CLASS.teal;
+  useEffect(() => { setMounted(true); }, []);
+
+  // Lock body scroll while modal is open
+  useEffect(() => {
+    if (selected) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [selected]);
+
+  const pillCls   = PILL_CLASS[accent]   ?? PILL_CLASS.teal;
   const accentCls = MODAL_ACCENT[accent] ?? MODAL_ACCENT.teal;
+
+  const modal = selected ? (
+    <div
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      onClick={() => setSelected(null)}
+      dir={isAr ? 'rtl' : 'ltr'}
+    >
+      {/* Plain dark overlay — no blur to avoid GPU flicker */}
+      <div className="absolute inset-0 bg-ink/60 modal-overlay" />
+
+      {/* Modal card */}
+      <div
+        className="relative bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg shadow-2xl overflow-hidden modal-card"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Accent header */}
+        <div className={`${accentCls} px-7 pt-7 pb-5`}>
+          <button
+            type="button"
+            onClick={() => setSelected(null)}
+            className="absolute top-4 end-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
+            aria-label="Close"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+          <p className="text-white/60 text-[11px] font-semibold tracking-widest uppercase mb-1">
+            {isAr ? 'خدمة' : 'Service'}
+          </p>
+          <h3 className="text-white font-heading text-xl leading-snug pe-8">
+            {isAr ? selected.ar.title : selected.en.title}
+          </h3>
+        </div>
+
+        {/* Body */}
+        <div className="px-7 py-6 space-y-5 max-h-[60vh] overflow-y-auto">
+          <p className="text-ink-2 text-sm leading-relaxed">
+            {isAr ? selected.ar.body : selected.en.body}
+          </p>
+          <div className="border-t border-border pt-4">
+            <p className="text-[11px] font-bold tracking-widest uppercase text-ink-2/40 mb-2">
+              {isAr ? 'متى ينطبق هذا؟' : 'When does this apply?'}
+            </p>
+            <p className="text-xs text-ink-2/70 leading-relaxed">
+              {isAr ? selected.ar.forLabel : selected.en.forLabel}
+            </p>
+          </div>
+          <a
+            href="#contact"
+            onClick={() => setSelected(null)}
+            className={`block w-full text-center text-sm font-semibold py-3 rounded-xl transition-colors ${
+              accent === 'teal'  ? 'bg-teal text-white hover:bg-teal-dark'   :
+              accent === 'coral' ? 'bg-coral text-white hover:bg-coral-dark' :
+                                   'bg-sage text-white hover:bg-sage-dark'
+            }`}
+          >
+            {isAr ? 'احجز استشارة' : 'Book a Consultation'}
+          </a>
+        </div>
+      </div>
+    </div>
+  ) : null;
 
   return (
     <>
+      {/* Hint label */}
+      <p className={`text-[11px] text-ink-2/40 mb-2 ${isAr ? 'text-right' : 'text-left'}`}>
+        {isAr ? 'اضغط على أي خدمة لمعرفة المزيد ↓' : 'Tap any service to learn more ↓'}
+      </p>
+
       <ul className={`flex flex-wrap gap-2 ${isAr ? 'justify-end' : 'justify-start'}`}>
         {items.map((item, i) => (
           <li key={item}>
             <button
               type="button"
               onClick={() => setSelected(exps[i] ?? null)}
-              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer ${pillCls}`}
+              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-all cursor-pointer active:scale-95 ${pillCls}`}
             >
-              <span className="w-1 h-1 rounded-full bg-current opacity-60 flex-shrink-0" />
-              {item}
+              {isAr ? (
+                <>
+                  <ExpandIcon />
+                  {item}
+                </>
+              ) : (
+                <>
+                  {item}
+                  <ExpandIcon />
+                </>
+              )}
             </button>
           </li>
         ))}
       </ul>
 
-      {selected && (
-        <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-          onClick={() => setSelected(null)}
-        >
-          <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" />
-          <div
-            className="relative bg-white rounded-t-3xl sm:rounded-3xl w-full sm:max-w-lg shadow-2xl overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Accent header bar */}
-            <div className={`${accentCls} px-7 pt-7 pb-5`}>
-              <button
-                type="button"
-                onClick={() => setSelected(null)}
-                className="absolute top-4 end-4 w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 flex items-center justify-center text-white transition-colors"
-                aria-label="Close"
-              >
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
-              <p className="text-white/60 text-[11px] font-semibold tracking-widest uppercase mb-1">
-                {isAr ? 'خدمة' : 'Service'}
-              </p>
-              <h3 className="text-white font-heading text-xl leading-snug pe-8">
-                {isAr ? selected.ar.title : selected.en.title}
-              </h3>
-            </div>
-
-            {/* Body */}
-            <div className="px-7 py-6 space-y-5 max-h-[60vh] overflow-y-auto">
-              <p className="text-ink-2 text-sm leading-relaxed">
-                {isAr ? selected.ar.body : selected.en.body}
-              </p>
-              <div className="border-t border-border pt-4">
-                <p className="text-[11px] font-bold tracking-widest uppercase text-ink-2/40 mb-2">
-                  {isAr ? 'متى ينطبق هذا؟' : 'When does this apply?'}
-                </p>
-                <p className="text-xs text-ink-2/70 leading-relaxed">
-                  {isAr ? selected.ar.forLabel : selected.en.forLabel}
-                </p>
-              </div>
-              <a
-                href={`#contact`}
-                onClick={() => setSelected(null)}
-                className={`block w-full text-center text-sm font-semibold py-3 rounded-xl transition-colors ${
-                  accent === 'teal' ? 'bg-teal text-white hover:bg-teal-dark' :
-                  accent === 'coral' ? 'bg-coral text-white hover:bg-coral-dark' :
-                  'bg-sage text-white hover:bg-sage-dark'
-                }`}
-              >
-                {isAr ? 'احجز استشارة' : 'Book a Consultation'}
-              </a>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Rendered at document.body via portal to escape any stacking context */}
+      {mounted && modal ? createPortal(modal, document.body) : null}
     </>
   );
 }
