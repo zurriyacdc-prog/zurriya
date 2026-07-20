@@ -11,6 +11,17 @@ export type ReportType = 'progress' | 'assessment' | 'plan' | 'speech' | 'behavi
 export type MediaType = 'photo' | 'video';
 export type ReinforcerCategory = 'toys' | 'foods' | 'activities' | 'songs';
 
+export type SessionSource = 'portal' | 'cue';
+
+/** Mirrors the goal shapes sent by CUE's /api/sessions/ingest payload (see CUE's TargetDocType.scoringModel). */
+export type PortalGoalSummary =
+  | { scoringModel: 'percentage'; goalId: string; name: string; baseline: number; current: number; target: number }
+  | { scoringModel: 'ladder'; goalId: string; name: string; hierarchyType: 'motor' | 'vocal'; currentPromptLevel: string; independenceScore: number };
+
+export type PortalBehaviorSummaryEntry = { parentFacingLabel: string; count: number };
+
+export type PortalReinforcementSummary = { totalReinforcementEvents: number };
+
 export interface Database {
   public: {
     Tables: {
@@ -87,16 +98,26 @@ export interface Database {
         Row: {
           id: string;
           child_id: string;
-          therapist_id: string;
+          therapist_id: string | null;
           session_date: string;
-          type: SessionType;
+          type: SessionType | null;
           duration_minutes: number;
           engagement_score: number | null;
           notes_en: string | null;
           notes_ar: string | null;
           created_at: string;
+          /** 'portal' = logged by a therapist directly in the Portal; 'cue' = ingested from the CUE app via /api/sessions/ingest. */
+          source: SessionSource;
+          /** CUE's own session id — unique when set, used to upsert on retried ingest deliveries so they don't duplicate. Null for portal-native rows. */
+          external_session_id: string | null;
+          /** Free-text therapist name as sent by CUE — there's no matching Zurriya user id for it, unlike therapist_id. Null for portal-native rows. */
+          therapist_name: string | null;
+          goals: PortalGoalSummary[] | null;
+          behavior_summary: PortalBehaviorSummaryEntry[] | null;
+          reinforcement_summary: PortalReinforcementSummary | null;
+          parent_summary: string | null;
         };
-        Insert: Omit<Database['public']['Tables']['sessions']['Row'], 'id' | 'created_at'>;
+        Insert: Omit<Database['public']['Tables']['sessions']['Row'], 'id' | 'created_at' | 'source'> & { source?: SessionSource };
         Update: Partial<Database['public']['Tables']['sessions']['Insert']>;
       };
       timeline_events: {

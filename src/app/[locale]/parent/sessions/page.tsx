@@ -2,6 +2,9 @@ import { redirect }         from 'next/navigation';
 import { getParentChildId } from '@/lib/supabase/portal-data';
 import { createClient }     from '@/lib/supabase/server';
 import { adminClient }      from '@/lib/supabase/admin';
+import { ProgressBar }      from '@/components/portal/ui/ProgressBar';
+import { PromptLevelIndicator } from '@/components/portal/ui/PromptLevelIndicator';
+import type { PortalGoalSummary, PortalBehaviorSummaryEntry } from '@/lib/supabase/types';
 
 const TYPE_MAP: Record<string, [string, string, string]> = {
   'Individual': ['Individual Therapy', 'علاج فردي',    'bg-teal-pale text-teal'],
@@ -46,8 +49,9 @@ export default async function ParentSessionsPage({ params: { locale } }: { param
 
       <div className="space-y-3">
         {sessions?.map((s) => {
-          const [enLabel, arLabel, typeClass] = TYPE_MAP[s.type] ?? ['Session', 'جلسة', 'bg-paper text-ink-2'];
-          const therapist = therapistName;
+          const typeEntry = s.type ? TYPE_MAP[s.type] : null;
+          const isFromCue = s.source === 'cue';
+          const therapist = isFromCue ? (s.therapist_name ?? '') : therapistName;
           const initials  = therapist.replace(/^Dr\.\s*/, '').charAt(0) || 'T';
           return (
             <div key={s.id} className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
@@ -66,9 +70,11 @@ export default async function ParentSessionsPage({ params: { locale } }: { param
                   </div>
                   <div>
                     {therapist && <p className="text-sm font-medium text-ink">{therapist}</p>}
-                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${typeClass}`}>
-                      {isAr ? arLabel : enLabel}
-                    </span>
+                    {typeEntry && (
+                      <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${typeEntry[2]}`}>
+                        {isAr ? typeEntry[1] : typeEntry[0]}
+                      </span>
+                    )}
                   </div>
                 </div>
                 {s.engagement_score && (
@@ -86,11 +92,61 @@ export default async function ParentSessionsPage({ params: { locale } }: { param
                     <span className="text-xs text-ink-2">{s.engagement_score} · {isAr ? 'مستوى التفاعل' : 'Engagement'}</span>
                   </div>
                 )}
-                {(isAr ? s.notes_ar : s.notes_en) && (
-                  <p className="text-xs text-ink-2 leading-relaxed bg-paper rounded-xl px-4 py-3">
-                    {isAr ? s.notes_ar : s.notes_en}
+
+                {isFromCue && s.goals && s.goals.length > 0 && (
+                  <div className="mb-3 space-y-2.5">
+                    {s.goals.map((g: PortalGoalSummary) => (
+                      <div key={g.goalId}>
+                        {g.scoringModel === 'percentage' ? (
+                          <>
+                            <div className="mb-1 flex items-center justify-between">
+                              <span className="text-xs font-medium text-ink">{g.name}</span>
+                              <span className="text-xs font-semibold text-teal">{g.current}%</span>
+                            </div>
+                            <ProgressBar pct={g.target === 0 ? 100 : Math.round((g.current / g.target) * 100)} />
+                          </>
+                        ) : (
+                          <>
+                            <p className="mb-1 text-xs font-medium text-ink">{g.name}</p>
+                            <PromptLevelIndicator
+                              currentPromptLevel={g.currentPromptLevel}
+                              independenceScore={g.independenceScore}
+                              hierarchyType={g.hierarchyType}
+                            />
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {isFromCue && s.behavior_summary && s.behavior_summary.length > 0 && (
+                  <div className="mb-3 flex flex-wrap gap-1.5">
+                    {s.behavior_summary.map((b: PortalBehaviorSummaryEntry, i: number) => (
+                      <span key={i} className="text-[11px] font-medium px-2 py-1 rounded-full bg-coral-pale text-coral">
+                        {b.parentFacingLabel} · {b.count}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {isFromCue && s.reinforcement_summary && s.reinforcement_summary.totalReinforcementEvents > 0 && (
+                  <p className="mb-3 text-xs text-ink-2">
+                    {isAr ? 'التعزيزات الإيجابية' : 'Positive reinforcement moments'}: {s.reinforcement_summary.totalReinforcementEvents}
                   </p>
                 )}
+
+                {isFromCue
+                  ? s.parent_summary && (
+                      <p className="text-xs text-ink-2 leading-relaxed bg-paper rounded-xl px-4 py-3">
+                        {s.parent_summary}
+                      </p>
+                    )
+                  : (isAr ? s.notes_ar : s.notes_en) && (
+                      <p className="text-xs text-ink-2 leading-relaxed bg-paper rounded-xl px-4 py-3">
+                        {isAr ? s.notes_ar : s.notes_en}
+                      </p>
+                    )}
               </div>
             </div>
           );
